@@ -18,8 +18,10 @@ function createWindow() {
   // 加载应用的 index.html
   mainWindow.loadFile('index.html');
 
-  // 打开开发者工具（可选）
-  // mainWindow.webContents.openDevTools();
+  // 在调试模式下打开开发者工具
+  if (process.argv.includes('--inspect')) {
+    mainWindow.webContents.openDevTools();
+  }
 
   // 当窗口被关闭时，这个事件会被触发
   mainWindow.on('closed', () => {

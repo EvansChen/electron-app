@@ -1,6 +1,10 @@
 # Dependencies
 node_modules/
 
+# Lock files (使用 PNPM，忽略其他包管理器的锁定文件)
+package-lock.json
+yarn.lock
+
 # Build outputs
 dist/
 build/
