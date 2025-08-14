@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { handleChatMessage } from './chatbot.js';
+import { handleChatMessage, clearHistory } from './chatbot.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -23,9 +23,9 @@ function createWindow() {
   mainWindow.loadFile('index.html');
 
   // 在调试模式下打开开发者工具
-  if (process.argv.includes('--inspect')) {
+  // if (process.argv.includes('--inspect')) {
     mainWindow.webContents.openDevTools();
-  }
+  // }
 
   // 当窗口被关闭时，这个事件会被触发
   mainWindow.on('closed', () => {
@@ -70,6 +70,18 @@ ipcMain.on('chatbot-message', async (event, message) => {
   } catch (error) {
     console.error('聊天机器人错误:', error);
     event.reply('chatbot-response', { error: error.message });
+  }
+});
+
+// IPC 通信处理 - 清除聊天历史
+ipcMain.on('clear-history', (event) => {
+  try {
+    console.log('收到清除历史请求');
+    clearHistory();
+    event.reply('clear-history-response', { success: true });
+  } catch (error) {
+    console.error('清除历史错误:', error);
+    event.reply('clear-history-response', { error: error.message });
   }
 });
 
