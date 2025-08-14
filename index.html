@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>我的 Electron 应用</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline';">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 600px;
+        }
+        
+        h1 {
+            font-size: 3em;
+            margin-bottom: 0.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        p {
+            font-size: 1.2em;
+            margin-bottom: 2em;
+            opacity: 0.9;
+        }
+        
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 12px 24px;
+            font-size: 1.1em;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+        }
+        
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .info {
+            margin-top: 2em;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .version-info {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 1em;
+        }
+        
+        .version-item {
+            text-align: center;
+        }
+        
+        .version-label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 欢迎使用 Electron</h1>
+        <p>你的第一个 Electron 应用已经成功运行！</p>
+        
+        <div>
+            <button onclick="showAlert()">显示提示</button>
+            <button onclick="toggleDevTools()">开发者工具</button>
+        </div>
+        
+        <div class="info">
+            <h3>运行环境信息</h3>
+            <div class="version-info">
+                <div class="version-item">
+                    <span class="version-label">Node.js</span>
+                    <span id="node-version"></span>
+                </div>
+                <div class="version-item">
+                    <span class="version-label">Chromium</span>
+                    <span id="chrome-version"></span>
+                </div>
+                <div class="version-item">
+                    <span class="version-label">Electron</span>
+                    <span id="electron-version"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 显示版本信息
+        document.getElementById('node-version').innerText = process.versions.node;
+        document.getElementById('chrome-version').innerText = process.versions.chrome;
+        document.getElementById('electron-version').innerText = process.versions.electron;
+        
+        // 显示提示框
+        function showAlert() {
+            alert('Hello from Electron! 🎉\n\n这是一个运行在 Electron 中的 JavaScript 提示框。');
+        }
+        
+        // 切换开发者工具
+        function toggleDevTools() {
+            const { remote } = require('electron');
+            const win = remote.getCurrentWindow();
+            win.webContents.toggleDevTools();
+        }
+        
+        // 欢迎消息
+        console.log('🎉 Electron 应用启动成功！');
+        console.log('Node.js 版本:', process.versions.node);
+        console.log('Chromium 版本:', process.versions.chrome);
+        console.log('Electron 版本:', process.versions.electron);
+    </script>
+</body>
+</html>

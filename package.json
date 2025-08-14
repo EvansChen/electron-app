@@ -1,0 +1,25 @@
+{
+  "name": "electron-app",
+  "version": "1.0.0",
+  "description": "一个简单的 Electron 应用",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --enable-logging",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "electron",
+    "app",
+    "desktop"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^37.2.6"
+  },
+  "dependencies": {
+    "@openai/agents": "^0.0.16",
+    "zod": "<=3.25.67"
+  }
+}
