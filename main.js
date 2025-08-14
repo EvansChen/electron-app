@@ -1,5 +1,9 @@
-const { app, BrowserWindow } = require('electron');
-const path = require('path');
+import { app, BrowserWindow, ipcMain } from 'electron';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { handleChatMessage } from './chatbot.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // 保持对窗口对象的全局引用，如果不这样做，当 JavaScript 对象被垃圾回收时，窗口会自动关闭。
 let mainWindow;
@@ -52,6 +56,34 @@ app.on('activate', () => {
     createWindow();
   }
 });
+
+// IPC 通信处理 - 与聊天机器人交互
+ipcMain.on('chatbot-message', async (event, message) => {
+  try {
+    console.log('收到聊天消息:', message);
+    
+    // 调用 chatbot.js 脚本
+    const response = await callChatbot(message);
+    
+    // 发送响应回渲染进程
+    event.reply('chatbot-response', { message: response });
+  } catch (error) {
+    console.error('聊天机器人错误:', error);
+    event.reply('chatbot-response', { error: error.message });
+  }
+});
+
+// 调用聊天机器人函数
+async function callChatbot(message) {
+  try {
+    // 直接调用 chatbot 模块的 handleChatMessage 函数
+    const response = await handleChatMessage(message);
+    return response;
+  } catch (error) {
+    console.error('聊天机器人处理错误:', error);
+    throw new Error(`聊天机器人处理失败: ${error.message}`);
+  }
+}
 
 // 在这个文件中，你可以包含应用程序剩余的所有部分的代码，
 // 也可以把它们放在分离的文件中，然后用 require 导入。
