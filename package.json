@@ -40,6 +40,7 @@
   "build": {
     "appId": "com.gurong.electron-app",
     "productName": "chatbot",
+    "icon": "icon.ico",
     "directories": {
       "output": "dist"
     },
@@ -47,9 +48,11 @@
       "main.js",
       "chatbot.js",
       "index.html",
+      "icon.ico",
       "node_modules/**/*"
     ],
     "win": {
+      "icon": "icon.ico",
       "target": {
         "target": "portable",
         "arch": [

@@ -14,6 +14,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    icon: path.join(__dirname, 'icon.ico'), // 设置窗口图标
     autoHideMenuBar: true, // 隐藏菜单栏
     webPreferences: {
       nodeIntegration: true,
