@@ -24,14 +24,6 @@
             --scrollbar-track: #f1f1f1;
             --scrollbar-thumb: #c1c1c1;
             --scrollbar-thumb-hover: #a8a8a8;
-            --code-bg: rgba(0, 0, 0, 0.1);
-            --pre-bg: #f8f9fa;
-            --pre-border: #e9ecef;
-            --table-header-bg: rgba(102, 126, 234, 0.1);
-            --table-border: #ddd;
-            --blockquote-border: #667eea;
-            --blockquote-bg: rgba(102, 126, 234, 0.05);
-            --link-color: #667eea;
             --system-message-bg: #e9ecef;
         }
 
@@ -53,14 +45,6 @@
             --scrollbar-track: #2d3748;
             --scrollbar-thumb: #4a5568;
             --scrollbar-thumb-hover: #718096;
-            --code-bg: rgba(255, 255, 255, 0.1);
-            --pre-bg: #1a202c;
-            --pre-border: #4a5568;
-            --table-header-bg: rgba(102, 126, 234, 0.2);
-            --table-border: #4a5568;
-            --blockquote-border: #667eea;
-            --blockquote-bg: rgba(102, 126, 234, 0.1);
-            --link-color: #90cdf4;
             --system-message-bg: #4a5568;
         }
 
@@ -310,6 +294,44 @@
             background: rgba(255,255,255,0.3);
         }
 
+        /* 复制按钮样式 */
+        .copy-button {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.2);
+            color: var(--text-secondary);
+            padding: 4px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.7em;
+            opacity: 0;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .message.bot {
+            position: relative;
+        }
+
+        .message.bot:hover .copy-button {
+            opacity: 1;
+        }
+
+        .copy-button:hover {
+            background: rgba(0,0,0,0.2);
+            transform: scale(1.05);
+        }
+
+        .copy-button.copied {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
         /* 滚动条样式 */
         .chat-messages::-webkit-scrollbar {
             width: 6px;
@@ -327,136 +349,6 @@
 
         .chat-messages::-webkit-scrollbar-thumb:hover {
             background: var(--scrollbar-thumb-hover);
-        }
-
-        /* Markdown 样式 */
-        .message .markdown-content {
-            line-height: 1.6;
-        }
-
-        .message .markdown-content h1,
-        .message .markdown-content h2,
-        .message .markdown-content h3,
-        .message .markdown-content h4,
-        .message .markdown-content h5,
-        .message .markdown-content h6 {
-            margin: 0.8em 0 0.5em 0;
-            font-weight: 600;
-        }
-
-        .message .markdown-content h1 { font-size: 1.4em; }
-        .message .markdown-content h2 { font-size: 1.3em; }
-        .message .markdown-content h3 { font-size: 1.2em; }
-        .message .markdown-content h4 { font-size: 1.1em; }
-        .message .markdown-content h5 { font-size: 1.05em; }
-        .message .markdown-content h6 { font-size: 1em; }
-
-        .message .markdown-content p {
-            margin: 0.5em 0;
-        }
-
-        .message .markdown-content ul,
-        .message .markdown-content ol {
-            margin: 0.5em 0;
-            padding-left: 1.5em;
-        }
-
-        .message .markdown-content li {
-            margin: 0.3em 0;
-        }
-
-        .message .markdown-content blockquote {
-            border-left: 4px solid var(--blockquote-border);
-            margin: 0.8em 0;
-            padding: 0.5em 1em;
-            background: var(--blockquote-bg);
-            font-style: italic;
-        }
-
-        .message.bot .markdown-content blockquote {
-            border-left-color: var(--text-secondary);
-            background: var(--blockquote-bg);
-        }
-
-        .message .markdown-content code {
-            background: var(--code-bg);
-            padding: 0.2em 0.4em;
-            border-radius: 3px;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 0.9em;
-        }
-
-        .message .markdown-content pre {
-            background: var(--pre-bg);
-            border: 1px solid var(--pre-border);
-            border-radius: 6px;
-            padding: 1em;
-            margin: 0.8em 0;
-            overflow-x: auto;
-            position: relative;
-        }
-
-        .message .markdown-content pre code {
-            background: none;
-            padding: 0;
-            border-radius: 0;
-            color: var(--text-primary);
-            display: block;
-            line-height: 1.4;
-        }
-
-        .message.user .markdown-content pre {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .message.user .markdown-content pre code {
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .message .markdown-content table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 0.8em 0;
-        }
-
-        .message .markdown-content th,
-        .message .markdown-content td {
-            border: 1px solid var(--table-border);
-            padding: 0.5em;
-            text-align: left;
-        }
-
-        .message .markdown-content th {
-            background: var(--table-header-bg);
-            font-weight: 600;
-        }
-
-        .message .markdown-content a {
-            color: var(--link-color);
-            text-decoration: none;
-        }
-
-        .message .markdown-content a:hover {
-            text-decoration: underline;
-        }
-
-        .message.user .markdown-content a {
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .message .markdown-content strong {
-            font-weight: 600;
-        }
-
-        .message .markdown-content em {
-            font-style: italic;
-        }
-
-        .message .markdown-content hr {
-            border: none;
-            border-top: 1px solid var(--border-color);
-            margin: 1em 0;
         }
 
         /* 响应式设计 */
@@ -516,7 +408,6 @@
 
     <script>
         const { ipcRenderer } = require('electron');
-        let marked;
         
         // 监听清除历史的响应
         ipcRenderer.on('clear-history-response', (event, response) => {
@@ -527,99 +418,6 @@
                 console.log('聊天历史已成功清除');
             }
         });
-        
-        // 尝试导入marked库
-        try {
-            const markedModule = require('marked');
-            // 新版本的marked直接导出marked函数
-            if (typeof markedModule === 'function') {
-                marked = markedModule;
-            } else if (markedModule && typeof markedModule.marked === 'function') {
-                marked = markedModule.marked;
-            } else if (markedModule && typeof markedModule.parse === 'function') {
-                marked = markedModule;
-            } else {
-                console.error('无法识别marked库的导出格式:', markedModule);
-            }
-        } catch (error) {
-            console.error('无法加载marked库:', error);
-        }
-        
-        // 配置marked选项（如果成功加载）
-        if (marked) {
-            try {
-                // 尝试配置marked选项
-                if (marked.setOptions) {
-                    marked.setOptions({
-                        breaks: true,      // 支持GitHub风格的换行
-                        gfm: true,         // 启用GitHub风格的Markdown
-                        sanitize: false,   // 不清理HTML（在Electron环境下相对安全）
-                        pedantic: false,   // 不要求严格符合原始markdown.pl
-                        smartLists: true,  // 智能列表
-                        smartypants: false // 不要转换引号等字符
-                    });
-
-                    // 自定义渲染器以处理代码块
-                    const renderer = new marked.Renderer();
-                    
-                    // 自定义代码块渲染
-                    renderer.code = function(code, language) {
-                        const escapedCode = code
-                            .replace(/&/g, '&amp;')
-                            .replace(/</g, '&lt;')
-                            .replace(/>/g, '&gt;')
-                            .replace(/"/g, '&quot;')
-                            .replace(/'/g, '&#39;');
-                        
-                        if (language) {
-                            return `<pre><code class="language-${language}">${escapedCode}</code></pre>`;
-                        }
-                        return `<pre><code>${escapedCode}</code></pre>`;
-                    };
-
-                    // 自定义内联代码渲染
-                    renderer.codespan = function(code) {
-                        const escapedCode = code
-                            .replace(/&/g, '&amp;')
-                            .replace(/</g, '&lt;')
-                            .replace(/>/g, '&gt;');
-                        return `<code>${escapedCode}</code>`;
-                    };
-
-                    marked.setOptions({ renderer: renderer });
-                } else if (marked.use) {
-                    // 新版本marked使用.use()方法配置
-                    marked.use({
-                        breaks: true,
-                        gfm: true,
-                        renderer: {
-                            code(code, language) {
-                                const escapedCode = code
-                                    .replace(/&/g, '&amp;')
-                                    .replace(/</g, '&lt;')
-                                    .replace(/>/g, '&gt;')
-                                    .replace(/"/g, '&quot;')
-                                    .replace(/'/g, '&#39;');
-                                
-                                if (language) {
-                                    return `<pre><code class="language-${language}">${escapedCode}</code></pre>`;
-                                }
-                                return `<pre><code>${escapedCode}</code></pre>`;
-                            },
-                            codespan(code) {
-                                const escapedCode = code
-                                    .replace(/&/g, '&amp;')
-                                    .replace(/</g, '&lt;')
-                                    .replace(/>/g, '&gt;');
-                                return `<code>${escapedCode}</code>`;
-                            }
-                        }
-                    });
-                }
-            } catch (configError) {
-                console.error('配置marked时出错:', configError);
-            }
-        }
         
         // DOM 元素
         const chatMessages = document.getElementById('chatMessages');
@@ -737,29 +535,17 @@
             
             const messageContent = document.createElement('div');
             
-            // 对于机器人消息，使用Markdown渲染
+            // bot 消息使用 HTML 渲染，user 和 system 消息使用纯文本
             if (type === 'bot') {
-                messageContent.className = 'markdown-content';
-                try {
-                    // 使用marked解析Markdown
-                    if (marked) {
-                        if (typeof marked.parse === 'function') {
-                            messageContent.innerHTML = marked.parse(content);
-                        } else if (typeof marked === 'function') {
-                            messageContent.innerHTML = marked(content);
-                        } else {
-                            throw new Error('无法识别marked函数');
-                        }
-                    } else {
-                        throw new Error('marked库未加载');
-                    }
-                } catch (error) {
-                    console.error('Markdown解析错误:', error);
-                    // 如果解析失败，回退到纯文本
-                    messageContent.textContent = content;
-                }
+                messageContent.innerHTML = content;
+                
+                // 为bot消息添加复制按钮
+                const copyButton = document.createElement('button');
+                copyButton.className = 'copy-button';
+                copyButton.innerHTML = '📋 复制';
+                copyButton.onclick = () => copyMessage(content, copyButton);
+                messageDiv.appendChild(copyButton);
             } else {
-                // 用户消息和系统消息使用纯文本
                 messageContent.textContent = content;
             }
             
@@ -824,6 +610,73 @@
             setTimeout(() => {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }, 100);
+        }
+
+        // 复制消息内容
+        function copyMessage(content, button) {
+            // 创建一个临时的文本区域来复制纯文本内容（去除HTML标签）
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            const textContent = tempDiv.textContent || tempDiv.innerText || '';
+            
+            // 使用 Clipboard API 或者 fallback 方法
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textContent).then(() => {
+                    showCopySuccess(button);
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(textContent, button);
+                });
+            } else {
+                fallbackCopyTextToClipboard(textContent, button);
+            }
+        }
+
+        // Fallback 复制方法
+        function fallbackCopyTextToClipboard(text, button) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showCopySuccess(button);
+            } catch (err) {
+                console.error('复制失败:', err);
+                showCopyError(button);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        // 显示复制成功状态
+        function showCopySuccess(button) {
+            const originalText = button.innerHTML;
+            button.innerHTML = '✅ 已复制';
+            button.classList.add('copied');
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('copied');
+            }, 2000);
+        }
+
+        // 显示复制失败状态
+        function showCopyError(button) {
+            const originalText = button.innerHTML;
+            button.innerHTML = '❌ 失败';
+            button.style.background = '#dc3545';
+            button.style.color = 'white';
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.style.background = '';
+                button.style.color = '';
+            }, 2000);
         }
 
         // 清空聊天记录

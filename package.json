@@ -9,7 +9,13 @@
     "dev": "electron . --enable-logging",
     "debug": "electron --inspect=9229 --remote-debugging-port=9222 .",
     "debug:chatbot": "node --inspect-brk chatbot.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "dist": "electron-builder --publish=never",
+    "package": "electron-packager . --platform=win32 --arch=x64 --out=dist-packager --overwrite"
   },
   "keywords": [
     "electron",
@@ -19,7 +25,9 @@
   "author": "Gu Rong",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^37.2.6"
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12",
+    "electron-packager": "^17.1.2"
   },
   "dependencies": {
     "@openai/agents": "^0.0.16",
@@ -28,5 +36,26 @@
     "marked": "^16.1.2",
     "openai": "^5.12.2",
     "zod": "<=3.25.67"
+  },
+  "build": {
+    "appId": "com.gurong.electron-app",
+    "productName": "chatbot",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "chatbot.js",
+      "index.html",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": {
+        "target": "portable",
+        "arch": [
+          "x64"
+        ]
+      }
+    }
   }
 }

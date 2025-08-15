@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { handleChatMessage, clearHistory } from './chatbot.js';
+import { marked } from 'marked';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -13,6 +14,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    autoHideMenuBar: true, // 隐藏菜单栏
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
@@ -22,9 +24,12 @@ function createWindow() {
   // 加载应用的 index.html
   mainWindow.loadFile('index.html');
 
+  // 窗口最大化
+  mainWindow.maximize();
+
   // 在调试模式下打开开发者工具
   // if (process.argv.includes('--inspect')) {
-    mainWindow.webContents.openDevTools();
+    // mainWindow.webContents.openDevTools();
   // }
 
   // 当窗口被关闭时，这个事件会被触发
@@ -90,7 +95,11 @@ async function callChatbot(message) {
   try {
     // 直接调用 chatbot 模块的 handleChatMessage 函数
     const response = await handleChatMessage(message);
-    return response;
+    
+    // 将 markdown 格式的响应转换为 HTML
+    const htmlResponse = marked(response);
+    
+    return htmlResponse;
   } catch (error) {
     console.error('聊天机器人处理错误:', error);
     throw new Error(`聊天机器人处理失败: ${error.message}`);
