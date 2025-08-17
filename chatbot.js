@@ -34,37 +34,82 @@ function saveConfigToFile(config) {
     }
 }
 
-// 默认配置
+// 默认配置 - 需要用户配置有效的API Key
 let currentConfig = {
-    apiKey: "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",
+    apiKey: "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", // 需要用户配置
     baseURL: "https://openrouter.ai/api/v1",
-    modelId: "openai/gpt-5-chat"
+    modelId: "qwen/qwen-2.5-3b-instruct" // 使用一个更常见的免费模型
 };
 
 // 在启动时加载保存的配置
 const savedConfig = loadSavedConfig();
 if (savedConfig) {
     currentConfig = { ...currentConfig, ...savedConfig };
-    console.log('使用保存的配置:', currentConfig);
+    console.log('使用保存的配置:', {
+        baseURL: currentConfig.baseURL,
+        modelId: currentConfig.modelId,
+        hasApiKey: !!currentConfig.apiKey
+    });
+} else {
+    console.warn('未找到保存的配置，请在界面中配置API设置');
 }
 
-// 创建OpenAI客户端
-let client = new OpenAI({
-    apiKey: currentConfig.apiKey,
-    baseURL: currentConfig.baseURL,
-});
+// 验证配置是否完整
+function validateConfig(config = currentConfig) {
+    const errors = [];
+    
+    if (!config.apiKey || config.apiKey.trim() === '') {
+        errors.push('API Key 不能为空');
+    }
+    
+    if (!config.baseURL || config.baseURL.trim() === '') {
+        errors.push('Base URL 不能为空');
+    }
+    
+    if (!config.modelId || config.modelId.trim() === '') {
+        errors.push('模型 ID 不能为空');
+    }
+    
+    return {
+        isValid: errors.length === 0,
+        errors: errors
+    };
+}
 
-setOpenAIAPI("chat_completions");
-setDefaultOpenAIClient(client); 
-setTracingDisabled(true);
+// 创建OpenAI客户端（仅在配置有效时）
+let client = null;
+let agent = null;
 
-// 创建Agent
-let agent = new Agent({
-    model: currentConfig.modelId,
-    name: 'ChatBot',
-    description: 'A helpful AI assistant chatbot',
-    instructions: 'You are a helpful AI assistant. Provide clear and concise answers to user questions in Chinese. Be friendly and helpful.',
-});
+function initializeClient() {
+    const validation = validateConfig();
+    if (validation.isValid) {
+        client = new OpenAI({
+            apiKey: currentConfig.apiKey,
+            baseURL: currentConfig.baseURL,
+        });
+
+        setOpenAIAPI("chat_completions");
+        setDefaultOpenAIClient(client); 
+        setTracingDisabled(true);
+
+        // 创建Agent
+        agent = new Agent({
+            model: currentConfig.modelId,
+            name: 'ChatBot',
+            description: 'A helpful AI assistant chatbot',
+            instructions: 'You are a helpful AI assistant. Provide clear and concise answers to user questions in Chinese. Be friendly and helpful.',
+        });
+        
+        console.log('OpenAI 客户端和 Agent 初始化成功');
+        return true;
+    } else {
+        console.log('配置不完整，跳过客户端初始化:', validation.errors);
+        return false;
+    }
+}
+
+// 尝试初始化客户端
+initializeClient();
 
 let thread = [];
 
@@ -96,22 +141,11 @@ function updateConfig(newConfig) {
             console.warn('配置保存失败，但仍会应用到当前会话');
         }
         
-        // 重新创建OpenAI客户端
-        client = new OpenAI({
-            apiKey: currentConfig.apiKey,
-            baseURL: currentConfig.baseURL,
-        });
-        
-        // 重新设置默认客户端
-        setDefaultOpenAIClient(client);
-        
-        // 重新创建Agent
-        agent = new Agent({
-            model: currentConfig.modelId,
-            name: 'ChatBot',
-            description: 'A helpful AI assistant chatbot',
-            instructions: 'You are a helpful AI assistant. Provide clear and concise answers to user questions in Chinese. Be friendly and helpful.',
-        });
+        // 重新初始化客户端和Agent
+        const initialized = initializeClient();
+        if (!initialized) {
+            return { success: false, error: '配置不完整，无法初始化客户端' };
+        }
         
         console.log('LLM配置更新成功');
         return { success: true, message: '配置更新成功并已保存' };
@@ -124,6 +158,19 @@ function updateConfig(newConfig) {
 // 处理聊天消息的函数
 async function handleChatMessage(message) {
     try {
+        // 首先验证配置
+        const validation = validateConfig();
+        if (!validation.isValid) {
+            throw new Error(`配置不完整: ${validation.errors.join(', ')}。请在设置中配置完整的 API 信息。`);
+        }
+        
+        console.log('处理聊天消息:', message);
+        console.log('当前配置:', {
+            baseURL: currentConfig.baseURL,
+            modelId: currentConfig.modelId,
+            apiKeyPrefix: currentConfig.apiKey ? currentConfig.apiKey.substring(0, 10) + '...' : 'undefined'
+        });
+        
         thread = thread.concat({ role: 'user', content: message });
         
         const result = await run(agent, thread, {
@@ -135,7 +182,27 @@ async function handleChatMessage(message) {
         return result.finalOutput || result.output || '抱歉，我现在无法回应。';
     } catch (error) {
         console.error('聊天机器人错误:', error);
-        throw new Error(`聊天机器人处理失败: ${error.message}`);
+        console.error('错误详情:', {
+            message: error.message,
+            status: error.status,
+            code: error.code,
+            type: error.type
+        });
+        
+        let userFriendlyError = '聊天机器人处理失败';
+        if (error.message.includes('401')) {
+            userFriendlyError = 'API Key 无效或已过期，请检查配置';
+        } else if (error.message.includes('404')) {
+            userFriendlyError = '模型不存在或 Base URL 错误，请检查配置';
+        } else if (error.message.includes('429')) {
+            userFriendlyError = '请求频率过高，请稍后再试';
+        } else if (error.message.includes('network') || error.message.includes('ENOTFOUND')) {
+            userFriendlyError = '网络连接错误，请检查网络设置';
+        } else {
+            userFriendlyError = `聊天机器人处理失败: ${error.message}`;
+        }
+        
+        throw new Error(userFriendlyError);
     }
 }
 
@@ -157,7 +224,12 @@ function getCurrentConfig() {
 // 测试模型连通性的函数
 async function testModelConnection(config) {
     try {
-        console.log('测试模型连通性:', config);
+        console.log('测试模型连通性:', {
+            baseURL: config.baseUrl || currentConfig.baseURL,
+            modelId: config.modelId || currentConfig.modelId,
+            apiKeyPrefix: (config.apiKey || currentConfig.apiKey) ? 
+                (config.apiKey || currentConfig.apiKey).substring(0, 10) + '...' : 'undefined'
+        });
         
         // 创建临时的OpenAI客户端进行测试
         const testClient = new OpenAI({
@@ -198,16 +270,24 @@ async function testModelConnection(config) {
         
     } catch (error) {
         console.error('模型连接测试失败:', error);
+        console.error('错误详情:', {
+            message: error.message,
+            status: error.status,
+            code: error.code,
+            type: error.type
+        });
         
         let errorMessage = '连接测试失败';
-        if (error.message.includes('401')) {
-            errorMessage = 'API Key 无效或过期';
-        } else if (error.message.includes('404')) {
+        if (error.message.includes('401') || error.status === 401) {
+            errorMessage = 'API Key 无效、过期或权限不足';
+        } else if (error.message.includes('404') || error.status === 404) {
             errorMessage = '模型ID不存在或Base URL错误';
-        } else if (error.message.includes('429')) {
+        } else if (error.message.includes('429') || error.status === 429) {
             errorMessage = '请求频率过高，请稍后再试';
-        } else if (error.message.includes('network')) {
+        } else if (error.message.includes('network') || error.message.includes('ENOTFOUND')) {
             errorMessage = '网络连接错误，请检查网络设置';
+        } else if (error.message.includes('timeout')) {
+            errorMessage = '请求超时，请检查网络连接';
         } else {
             errorMessage = error.message;
         }

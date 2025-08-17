@@ -735,12 +735,18 @@
                 document.getElementById('baseUrl').value = response.config.baseURL || '';
                 document.getElementById('apiKey').value = response.config.apiKey || '';
                 document.getElementById('modelId').value = response.config.modelId || '';
+                
+                // 保存当前模型ID并更新状态显示
+                currentModelId = response.config.modelId || '';
+                updateChatStatusWithModel();
             } else {
                 console.log('获取配置失败，使用默认值:', response.error);
                 // 如果无法从后端获取配置，使用空值
                 document.getElementById('baseUrl').value = '';
                 document.getElementById('apiKey').value = '';
                 document.getElementById('modelId').value = '';
+                currentModelId = '';
+                updateChatStatusWithModel();
             }
         });
         
@@ -753,11 +759,12 @@
 
         // 聊天状态
         let isWaitingResponse = false;
+        let currentModelId = ''; // 存储当前模型ID
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
             messageInput.focus();
-            updateChatStatus('就绪');
+            updateChatStatusWithModel();
             
             // 加载保存的主题设置
             const savedTheme = localStorage.getItem('theme') || 'light';
@@ -910,7 +917,11 @@
             isWaitingResponse = waiting;
             sendButton.disabled = waiting;
             messageInput.disabled = waiting;
-            updateChatStatus(waiting ? '正在处理...' : '就绪');
+            if (waiting) {
+                updateChatStatus('正在处理...');
+            } else {
+                updateChatStatusWithModel();
+            }
         }
 
         // 显示/隐藏打字指示器
@@ -926,6 +937,15 @@
         // 更新聊天状态
         function updateChatStatus(status) {
             chatStatus.textContent = status;
+        }
+
+        // 更新带有模型ID的聊天状态
+        function updateChatStatusWithModel() {
+            if (currentModelId) {
+                chatStatus.textContent = `就绪 - ${currentModelId}`;
+            } else {
+                chatStatus.textContent = '就绪';
+            }
         }
 
         // 显示错误消息
@@ -1084,6 +1104,9 @@
                 modelId: modelId
             });
             
+            // 更新当前模型ID
+            currentModelId = modelId;
+            
             // 显示成功消息
             showConfigSuccess();
             
@@ -1093,7 +1116,7 @@
             // 更新聊天状态
             updateChatStatus('配置已更新');
             setTimeout(() => {
-                updateChatStatus('就绪');
+                updateChatStatusWithModel();
             }, 2000);
         }
 
