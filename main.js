@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { handleChatMessage, clearHistory, updateConfig, testModelConnection, getCurrentConfig, getAvailableModels, getConfigFilePath } from './chatbot.js';
+import { loadMcpConfig, saveMcpConfig, getCurrentMcpConfig, updateMcpConfig, getMcpConfigFilePath } from './mcpserver.js';
 import { marked } from 'marked';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -148,6 +149,66 @@ ipcMain.on('get-config-file-path', (event) => {
   } catch (error) {
     console.error('获取配置文件路径错误:', error);
     event.reply('config-file-path-response', { success: false, error: error.message });
+  }
+});
+
+// IPC 通信处理 - 获取当前MCP配置
+ipcMain.on('get-current-mcp-config', (event) => {
+  try {
+    console.log('收到获取MCP配置请求');
+    const config = getCurrentMcpConfig();
+    event.reply('current-mcp-config-response', { success: true, config: config });
+  } catch (error) {
+    console.error('获取MCP配置错误:', error);
+    event.reply('current-mcp-config-response', { success: false, error: error.message });
+  }
+});
+
+// IPC 通信处理 - 更新MCP配置
+ipcMain.on('update-mcp-config', (event, config) => {
+  try {
+    console.log('收到更新MCP配置请求:', config);
+    const result = updateMcpConfig(config);
+    event.reply('update-mcp-config-response', result);
+  } catch (error) {
+    console.error('更新MCP配置错误:', error);
+    event.reply('update-mcp-config-response', { success: false, error: error.message });
+  }
+});
+
+// IPC 通信处理 - 获取MCP配置文件路径
+ipcMain.on('get-mcp-config-file-path', (event) => {
+  try {
+    console.log('收到获取MCP配置文件路径请求');
+    const configPath = getMcpConfigFilePath();
+    event.reply('mcp-config-file-path-response', { success: true, path: configPath });
+  } catch (error) {
+    console.error('获取MCP配置文件路径错误:', error);
+    event.reply('mcp-config-file-path-response', { success: false, error: error.message });
+  }
+});
+
+// IPC 通信处理 - 获取MCP配置
+ipcMain.on('get-mcp-config', (event) => {
+  try {
+    console.log('收到获取MCP配置请求');
+    const config = getCurrentMcpConfig();
+    event.reply('mcp-config-response', { success: true, config: config });
+  } catch (error) {
+    console.error('获取MCP配置错误:', error);
+    event.reply('mcp-config-response', { success: false, error: error.message });
+  }
+});
+
+// IPC 通信处理 - 保存MCP配置
+ipcMain.on('save-mcp-config', (event, config) => {
+  try {
+    console.log('收到保存MCP配置请求:', config);
+    const result = saveMcpConfig(config);
+    event.reply('mcp-config-save-response', { success: true, message: '配置保存成功' });
+  } catch (error) {
+    console.error('保存MCP配置错误:', error);
+    event.reply('mcp-config-save-response', { success: false, error: error.message });
   }
 });
 
