@@ -69,3 +69,6 @@ Thumbs.db
 out/
 app/
 packages/
+
+# LLM Configuration (contains sensitive API keys)
+llm-config.json

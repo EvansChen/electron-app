@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { handleChatMessage, clearHistory } from './chatbot.js';
+import { handleChatMessage, clearHistory, updateConfig, testModelConnection, getCurrentConfig } from './chatbot.js';
 import { marked } from 'marked';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -88,6 +88,42 @@ ipcMain.on('clear-history', (event) => {
   } catch (error) {
     console.error('清除历史错误:', error);
     event.reply('clear-history-response', { error: error.message });
+  }
+});
+
+// IPC 通信处理 - 更新LLM配置
+ipcMain.on('update-llm-config', (event, config) => {
+  try {
+    console.log('收到更新配置请求:', config);
+    const result = updateConfig(config);
+    event.reply('update-config-response', result);
+  } catch (error) {
+    console.error('更新配置错误:', error);
+    event.reply('update-config-response', { success: false, error: error.message });
+  }
+});
+
+// IPC 通信处理 - 测试模型连通性
+ipcMain.on('test-model-connection', async (event, config) => {
+  try {
+    console.log('收到测试连接请求:', config);
+    const result = await testModelConnection(config);
+    event.reply('test-connection-response', result);
+  } catch (error) {
+    console.error('测试连接错误:', error);
+    event.reply('test-connection-response', { success: false, error: error.message });
+  }
+});
+
+// IPC 通信处理 - 获取当前配置
+ipcMain.on('get-current-config', (event) => {
+  try {
+    console.log('收到获取配置请求');
+    const config = getCurrentConfig();
+    event.reply('current-config-response', { success: true, config: config });
+  } catch (error) {
+    console.error('获取配置错误:', error);
+    event.reply('current-config-response', { success: false, error: error.message });
   }
 });
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 聊天机器人</title>
+    <title>私人助理</title>
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
     <style>
         :root {
@@ -115,6 +115,28 @@
         }
 
         .theme-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        .config-button {
+            position: absolute;
+            top: 15px;
+            left: 120px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: var(--header-text);
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .config-button:hover {
             background: rgba(255,255,255,0.3);
             transform: scale(1.05);
         }
@@ -362,6 +384,190 @@
                 max-width: 90%;
             }
         }
+
+        /* 配置面板样式 */
+        .config-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .config-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--container-bg);
+            border-radius: 15px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+        }
+
+        .config-header {
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--text-primary);
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        .config-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .form-input {
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            background: var(--container-bg);
+            color: var(--text-primary);
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: #667eea;
+        }
+
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--text-secondary);
+            color: white;
+        }
+
+        .btn-test {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .btn-test:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-test:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .config-note {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-top: 15px;
+            padding: 10px;
+            background: var(--system-message-bg);
+            border-radius: 8px;
+            line-height: 1.4;
+        }
+
+        /* API Key 字段样式 */
+        .password-field {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .password-field .form-input {
+            padding-right: 45px; /* 为按钮留出空间 */
+            width: 100%;
+            flex: 1;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            transition: all 0.2s;
+            border-radius: 4px;
+        }
+
+        .password-toggle:hover {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .password-toggle:focus {
+            outline: none;
+            background: var(--border-color);
+        }
+
+        /* 键盘导航支持 */
+        .password-toggle:focus-visible {
+            outline: 2px solid #667eea;
+            outline-offset: 1px;
+        }
+
+        /* 帮助文本样式 */
+        .field-help {
+            font-size: 0.75em;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            display: block;
+            line-height: 1.3;
+        }
     </style>
 </head>
 <body>
@@ -370,6 +576,10 @@
             <button class="theme-toggle" onclick="toggleTheme()">
                 <span id="themeIcon">🌙</span>
                 <span id="themeText">暗黑</span>
+            </button>
+            <button class="config-button" onclick="openConfigModal()">
+                <span>⚙️</span>
+                <span>配置</span>
             </button>
             <h1>🤖 AI 聊天助手</h1>
             <div class="chat-status" id="chatStatus">准备就绪</div>
@@ -406,6 +616,79 @@
         </div>
     </div>
 
+    <!-- 配置面板模态框 -->
+    <div class="config-modal" id="configModal">
+        <div class="config-panel">
+            <div class="config-header">
+                🤖 LLM 配置设置
+            </div>
+            <form class="config-form" id="configForm">
+                <div class="form-group">
+                    <label class="form-label" for="baseUrl">Base URL:</label>
+                    <input 
+                        type="text" 
+                        id="baseUrl" 
+                        class="form-input" 
+                        placeholder="例如: https://api.openai.com/v1"
+                        value=""
+                    />
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="apiKey">API Key:</label>
+                    <div class="password-field">
+                        <input 
+                            type="password" 
+                            id="apiKey" 
+                            class="form-input" 
+                            placeholder="输入您的 API Key"
+                            value=""
+                            aria-describedby="apiKeyHelp"
+                        />
+                        <button 
+                            type="button" 
+                            class="password-toggle" 
+                            onclick="togglePasswordVisibility()" 
+                            id="passwordToggle" 
+                            title="显示密码"
+                            aria-label="显示密码"
+                            tabindex="0"
+                        >
+                            👁️
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="modelId">模型 ID:</label>
+                    <input 
+                        type="text" 
+                        id="modelId" 
+                        class="form-input" 
+                        placeholder="例如: gpt-3.5-turbo, gpt-4"
+                        value=""
+                    />
+                </div>
+                
+                <div class="form-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeConfigModal()">
+                        取消
+                    </button>
+                    <button type="button" class="btn btn-test" id="testButton" onclick="testConnection()">
+                        🔗 测试连接
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveConfig()">
+                        保存配置
+                    </button>
+                </div>
+                
+                <div class="config-note">
+                    💡 提示：配置信息将安全保存在本地，用于与AI服务进行通信。请确保API Key的安全性。
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         const { ipcRenderer } = require('electron');
         
@@ -416,6 +699,48 @@
                 showError('清除历史失败: ' + response.error);
             } else {
                 console.log('聊天历史已成功清除');
+            }
+        });
+
+        // 监听配置更新响应
+        ipcRenderer.on('update-config-response', (event, response) => {
+            if (response.error) {
+                console.error('配置更新失败:', response.error);
+                showError('配置更新失败: ' + response.error);
+            } else {
+                console.log('配置更新成功:', response.message);
+            }
+        });
+
+        // 监听测试连接响应
+        ipcRenderer.on('test-connection-response', (event, response) => {
+            const testButton = document.getElementById('testButton');
+            testButton.disabled = false;
+            testButton.innerHTML = '🔗 测试连接';
+            
+            if (response.success) {
+                console.log('连接测试成功:', response);
+                showTestSuccess(response);
+            } else {
+                console.error('连接测试失败:', response.error);
+                showTestError(response.error);
+            }
+        });
+
+        // 监听获取配置响应
+        ipcRenderer.on('current-config-response', (event, response) => {
+            if (response.success && response.config) {
+                console.log('获取到保存的配置:', response.config);
+                // 更新表单字段
+                document.getElementById('baseUrl').value = response.config.baseURL || '';
+                document.getElementById('apiKey').value = response.config.apiKey || '';
+                document.getElementById('modelId').value = response.config.modelId || '';
+            } else {
+                console.log('获取配置失败，使用默认值:', response.error);
+                // 如果无法从后端获取配置，使用空值
+                document.getElementById('baseUrl').value = '';
+                document.getElementById('apiKey').value = '';
+                document.getElementById('modelId').value = '';
             }
         });
         
@@ -437,6 +762,21 @@
             // 加载保存的主题设置
             const savedTheme = localStorage.getItem('theme') || 'light';
             setTheme(savedTheme);
+            
+            // 加载保存的配置
+            loadConfig();
+            
+            // 添加API Key字段的键盘支持
+            const apiKeyInput = document.getElementById('apiKey');
+            if (apiKeyInput) {
+                apiKeyInput.addEventListener('keydown', function(e) {
+                    // Ctrl+Shift+V 切换密码可见性
+                    if (e.ctrlKey && e.shiftKey && e.key === 'V') {
+                        e.preventDefault();
+                        togglePasswordVisibility();
+                    }
+                });
+            }
         });
 
         // 主题切换功能
@@ -704,6 +1044,206 @@
         window.addEventListener('beforeunload', function() {
             // 清理任何正在进行的请求
             ipcRenderer.removeAllListeners('chatbot-response');
+        });
+
+        // 配置面板相关功能
+        function openConfigModal() {
+            document.getElementById('configModal').style.display = 'block';
+            loadConfig();
+        }
+
+        function closeConfigModal() {
+            document.getElementById('configModal').style.display = 'none';
+        }
+
+        function loadConfig() {
+            // 从后端获取保存的配置
+            ipcRenderer.send('get-current-config');
+        }
+
+        function saveConfig() {
+            const baseUrl = document.getElementById('baseUrl').value.trim();
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const modelId = document.getElementById('modelId').value.trim();
+            
+            // 基本验证
+            if (!baseUrl && !apiKey && !modelId) {
+                showError('请至少填写一项配置信息');
+                return;
+            }
+            
+            if (baseUrl && !isValidUrl(baseUrl)) {
+                showError('请输入有效的Base URL格式');
+                return;
+            }
+            
+            // 通知主进程更新配置
+            ipcRenderer.send('update-llm-config', {
+                baseUrl: baseUrl,
+                apiKey: apiKey,
+                modelId: modelId
+            });
+            
+            // 显示成功消息
+            showConfigSuccess();
+            
+            // 关闭模态框
+            closeConfigModal();
+            
+            // 更新聊天状态
+            updateChatStatus('配置已更新');
+            setTimeout(() => {
+                updateChatStatus('就绪');
+            }, 2000);
+        }
+
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function showConfigSuccess() {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'error-message';
+            successDiv.style.background = '#28a745';
+            successDiv.textContent = '✅ 配置保存成功！';
+            
+            const container = document.querySelector('.chat-container');
+            container.insertBefore(successDiv, chatMessages);
+            
+            // 3秒后自动移除成功消息
+            setTimeout(() => {
+                if (successDiv.parentNode) {
+                    successDiv.parentNode.removeChild(successDiv);
+                }
+            }, 3000);
+        }
+
+        // 测试连接功能
+        function testConnection() {
+            const baseUrl = document.getElementById('baseUrl').value.trim();
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const modelId = document.getElementById('modelId').value.trim();
+            
+            // 基本验证
+            if (!baseUrl && !apiKey && !modelId) {
+                showError('请至少填写一项配置信息进行测试');
+                return;
+            }
+            
+            if (baseUrl && !isValidUrl(baseUrl)) {
+                showError('请输入有效的Base URL格式');
+                return;
+            }
+            
+            if (!apiKey) {
+                showError('API Key是必填项，请填写后再测试');
+                return;
+            }
+            
+            if (!modelId) {
+                showError('模型ID是必填项，请填写后再测试');
+                return;
+            }
+            
+            // 设置按钮为测试状态
+            const testButton = document.getElementById('testButton');
+            testButton.disabled = true;
+            testButton.innerHTML = '🔄 测试中...';
+            
+            // 发送测试请求到主进程
+            ipcRenderer.send('test-model-connection', {
+                baseUrl: baseUrl,
+                apiKey: apiKey,
+                modelId: modelId
+            });
+        }
+
+        // 显示测试成功消息
+        function showTestSuccess(response) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'error-message';
+            successDiv.style.background = '#28a745';
+            successDiv.innerHTML = `
+                <div>✅ 连接测试成功！</div>
+                <div style="font-size: 0.8em; margin-top: 5px;">
+                    模型: ${response.model}<br>
+                    服务器: ${response.baseURL}<br>
+                    响应: ${response.response}
+                </div>
+            `;
+            
+            const container = document.querySelector('.chat-container');
+            container.insertBefore(successDiv, chatMessages);
+            
+            // 5秒后自动移除成功消息
+            setTimeout(() => {
+                if (successDiv.parentNode) {
+                    successDiv.parentNode.removeChild(successDiv);
+                }
+            }, 5000);
+        }
+
+        // 显示测试失败消息
+        function showTestError(error) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `
+                <div>❌ 连接测试失败</div>
+                <div style="font-size: 0.8em; margin-top: 5px;">
+                    错误: ${error}
+                </div>
+            `;
+            
+            const container = document.querySelector('.chat-container');
+            container.insertBefore(errorDiv, chatMessages);
+            
+            // 5秒后自动移除错误消息
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.parentNode.removeChild(errorDiv);
+                }
+            }, 5000);
+        }
+
+        // 切换密码可见性
+        function togglePasswordVisibility() {
+            const apiKeyInput = document.getElementById('apiKey');
+            const toggleButton = document.getElementById('passwordToggle');
+            
+            if (apiKeyInput.type === 'password') {
+                apiKeyInput.type = 'text';
+                toggleButton.textContent = '🙈';
+                toggleButton.title = '隐藏密码';
+                toggleButton.setAttribute('aria-label', '隐藏密码');
+            } else {
+                apiKeyInput.type = 'password';
+                toggleButton.textContent = '👁️';
+                toggleButton.title = '显示密码';
+                toggleButton.setAttribute('aria-label', '显示密码');
+            }
+        }
+
+        // 点击模态框背景关闭
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('configModal');
+            if (e.target === modal) {
+                closeConfigModal();
+            }
+        });
+
+        // ESC键关闭模态框
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('configModal');
+                if (modal.style.display === 'block') {
+                    closeConfigModal();
+                }
+            }
         });
 
         console.log('聊天界面已加载完成');
