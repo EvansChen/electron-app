@@ -4,20 +4,45 @@ import OpenAI from "openai";
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { app } from 'electron';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const configFilePath = path.join(__dirname, 'llm-config.json');
+
+// 获取用户数据目录，确保配置文件可写
+function getConfigFilePath() {
+    try {
+        // 在Electron环境中使用用户数据目录
+        const userDataPath = app.getPath('userData');
+        return path.join(userDataPath, 'llm-config.json');
+    } catch (error) {
+        // 如果不在Electron环境中（比如测试时），回退到当前目录
+        console.warn('不在Electron环境中，使用当前目录保存配置:', error.message);
+        return path.join(__dirname, 'llm-config.json');
+    }
+}
+
+const configFilePath = getConfigFilePath();
 
 // 加载保存的配置
 function loadSavedConfig() {
     try {
-        if (fs.existsSync(configFilePath)) {
-            const savedConfig = JSON.parse(fs.readFileSync(configFilePath, 'utf8'));
-            console.log('加载保存的配置:', savedConfig);
+        const configPath = getConfigFilePath();
+        console.log('尝试加载配置文件:', configPath);
+        
+        if (fs.existsSync(configPath)) {
+            const savedConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            console.log('加载保存的配置成功:', {
+                baseURL: savedConfig.baseURL,
+                modelId: savedConfig.modelId,
+                hasApiKey: !!savedConfig.apiKey
+            });
             return savedConfig;
+        } else {
+            console.log('配置文件不存在:', configPath);
         }
     } catch (error) {
         console.error('加载配置文件失败:', error);
+        console.error('配置文件路径:', getConfigFilePath());
     }
     return null;
 }
@@ -25,11 +50,27 @@ function loadSavedConfig() {
 // 保存配置到文件
 function saveConfigToFile(config) {
     try {
-        fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2), 'utf8');
-        console.log('配置已保存到文件:', configFilePath);
+        const configPath = getConfigFilePath();
+        const configDir = path.dirname(configPath);
+        
+        // 确保配置目录存在
+        if (!fs.existsSync(configDir)) {
+            fs.mkdirSync(configDir, { recursive: true });
+            console.log('创建配置目录:', configDir);
+        }
+        
+        // 保存配置文件
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
+        console.log('配置已保存到文件:', configPath);
         return true;
     } catch (error) {
         console.error('保存配置文件失败:', error);
+        console.error('配置文件路径:', getConfigFilePath());
+        console.error('错误详情:', {
+            code: error.code,
+            message: error.message,
+            path: error.path
+        });
         return false;
     }
 }
@@ -352,4 +393,4 @@ async function getAvailableModels(config = null) {
 }
 
 // Export the agent and functions for use in other modules
-export { agent, handleChatMessage, clearHistory, updateConfig, testModelConnection, getCurrentConfig, getAvailableModels };
+export { agent, handleChatMessage, clearHistory, updateConfig, testModelConnection, getCurrentConfig, getAvailableModels, getConfigFilePath };

@@ -800,6 +800,9 @@
                 
                 <div class="config-note">
                     💡 提示：配置信息将安全保存在本地，用于与AI服务进行通信。请确保API Key的安全性。
+                    <div id="configPathInfo" style="margin-top: 8px; font-size: 0.8em; color: var(--text-secondary);">
+                        配置文件路径：加载中...
+                    </div>
                 </div>
             </form>
         </div>
@@ -881,6 +884,18 @@
             } else {
                 console.error('模型列表获取失败:', response.error);
                 showModelsError(response.error);
+            }
+        });
+
+        // 监听获取配置文件路径响应
+        ipcRenderer.on('config-file-path-response', (event, response) => {
+            const configPathInfo = document.getElementById('configPathInfo');
+            if (response.success) {
+                configPathInfo.textContent = `配置文件路径：${response.path}`;
+                configPathInfo.title = response.path; // 添加悬停提示
+            } else {
+                configPathInfo.textContent = '配置文件路径：获取失败';
+                console.error('获取配置文件路径失败:', response.error);
             }
         });
         
@@ -1262,6 +1277,7 @@
         function openConfigModal() {
             document.getElementById('configModal').style.display = 'block';
             loadConfig();
+            loadConfigFilePath();
         }
 
         function closeConfigModal() {
@@ -1271,6 +1287,11 @@
         function loadConfig() {
             // 从后端获取保存的配置
             ipcRenderer.send('get-current-config');
+        }
+
+        function loadConfigFilePath() {
+            // 获取配置文件路径
+            ipcRenderer.send('get-config-file-path');
         }
 
         function saveConfig() {

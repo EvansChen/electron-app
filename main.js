@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { handleChatMessage, clearHistory, updateConfig, testModelConnection, getCurrentConfig, getAvailableModels } from './chatbot.js';
+import { handleChatMessage, clearHistory, updateConfig, testModelConnection, getCurrentConfig, getAvailableModels, getConfigFilePath } from './chatbot.js';
 import { marked } from 'marked';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -136,6 +136,18 @@ ipcMain.on('get-available-models', async (event, config) => {
   } catch (error) {
     console.error('获取模型列表错误:', error);
     event.reply('available-models-response', { success: false, error: error.message });
+  }
+});
+
+// IPC 通信处理 - 获取配置文件路径
+ipcMain.on('get-config-file-path', (event) => {
+  try {
+    console.log('收到获取配置文件路径请求');
+    const configPath = getConfigFilePath();
+    event.reply('config-file-path-response', { success: true, path: configPath });
+  } catch (error) {
+    console.error('获取配置文件路径错误:', error);
+    event.reply('config-file-path-response', { success: false, error: error.message });
   }
 });
 
