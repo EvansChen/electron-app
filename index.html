@@ -996,6 +996,25 @@
             }
         });
 
+        // 全局键盘事件监听 - 空格键聚焦到输入框
+        document.addEventListener('keydown', function(e) {
+            // 检查是否按下空格键
+            if (e.key === ' ' || e.code === 'Space') {
+                // 获取当前焦点元素
+                const activeElement = document.activeElement;
+                
+                // 如果当前焦点不在输入框、文本域或可编辑元素上，则聚焦到消息输入框
+                if (activeElement.tagName !== 'INPUT' && 
+                    activeElement.tagName !== 'TEXTAREA' && 
+                    !activeElement.isContentEditable &&
+                    !activeElement.classList.contains('chat-input')) {
+                    
+                    e.preventDefault(); // 阻止默认的空格行为（如页面滚动）
+                    messageInput.focus(); // 聚焦到消息输入框
+                }
+            }
+        });
+
         // 发送消息函数
         async function sendMessage() {
             const message = messageInput.value.trim();
