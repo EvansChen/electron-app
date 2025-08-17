@@ -559,6 +559,16 @@
             background: var(--system-message-bg);
         }
 
+        .model-item-selected {
+            background: #667eea !important;
+            color: white !important;
+        }
+
+        .model-item-selected .model-item-id,
+        .model-item-selected .model-item-name {
+            color: white !important;
+        }
+
         .model-item:last-child {
             border-bottom: none;
         }
@@ -588,6 +598,20 @@
             border-radius: 4px;
             margin: 8px;
             font-size: 0.9em;
+        }
+
+        /* 高亮匹配文本样式 */
+        .model-item mark {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 1px 2px;
+            border-radius: 2px;
+            font-weight: bold;
+        }
+
+        [data-theme="dark"] .model-item mark {
+            background-color: #ffc107;
+            color: #000;
         }
 
         .config-note {
@@ -750,8 +774,10 @@
                             type="text" 
                             id="modelId" 
                             class="form-input" 
-                            placeholder="例如: gpt-3.5-turbo, gpt-4"
+                            placeholder="例如: gpt-3.5-turbo, gpt-4, 或输入关键词过滤模型"
                             value=""
+                            oninput="filterModels()"
+                            onfocus="showModelsIfAvailable()"
                         />
                         <button type="button" class="btn btn-models" id="modelsButton" onclick="fetchAvailableModels()" title="获取可用模型列表">
                             📋
@@ -868,6 +894,8 @@
         // 聊天状态
         let isWaitingResponse = false;
         let currentModelId = ''; // 存储当前模型ID
+        let allModels = []; // 存储所有模型数据用于过滤
+        let selectedModelIndex = -1; // 当前选中的模型索引
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -889,6 +917,43 @@
                     if (e.ctrlKey && e.shiftKey && e.key === 'V') {
                         e.preventDefault();
                         togglePasswordVisibility();
+                    }
+                });
+            }
+            
+            // 添加模型ID字段的键盘导航支持
+            const modelIdInput = document.getElementById('modelId');
+            if (modelIdInput) {
+                modelIdInput.addEventListener('keydown', function(e) {
+                    const modelsList = document.getElementById('modelsList');
+                    const isListVisible = modelsList.style.display !== 'none';
+                    
+                    if (!isListVisible) return;
+                    
+                    const modelItems = modelsList.querySelectorAll('.model-item');
+                    
+                    switch(e.key) {
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            selectedModelIndex = Math.min(selectedModelIndex + 1, modelItems.length - 1);
+                            updateModelSelection(modelItems);
+                            break;
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            selectedModelIndex = Math.max(selectedModelIndex - 1, -1);
+                            updateModelSelection(modelItems);
+                            break;
+                        case 'Enter':
+                            e.preventDefault();
+                            if (selectedModelIndex >= 0 && selectedModelIndex < modelItems.length) {
+                                modelItems[selectedModelIndex].click();
+                            }
+                            break;
+                        case 'Escape':
+                            e.preventDefault();
+                            modelsList.style.display = 'none';
+                            selectedModelIndex = -1;
+                            break;
                     }
                 });
             }
@@ -1338,7 +1403,7 @@
         }
 
         // 显示模型列表
-        function showModelsList(models) {
+        function showModelsList(models, filterText = '') {
             const modelsList = document.getElementById('modelsList');
             
             if (!models || models.length === 0) {
@@ -1346,22 +1411,94 @@
                 return;
             }
             
+            // 存储所有模型数据
+            allModels = models;
+            
+            // 应用过滤
+            const filteredModels = filterText ? 
+                models.filter(model => {
+                    const modelId = (model.id || '').toLowerCase();
+                    const modelName = (model.name || model.owned_by || '').toLowerCase();
+                    const searchText = filterText.toLowerCase();
+                    return modelId.includes(searchText) || modelName.includes(searchText);
+                }) : models;
+            
+            if (filteredModels.length === 0) {
+                modelsList.innerHTML = `<div class="models-error">没有找到匹配 "${filterText}" 的模型</div>`;
+                modelsList.style.display = 'block';
+                return;
+            }
+            
             // 构建模型列表HTML
             let html = '';
-            models.forEach(model => {
+            filteredModels.forEach(model => {
                 const modelId = model.id || '';
                 const modelName = model.name || model.owned_by || '';
                 
+                // 高亮匹配的文本
+                let highlightedId = modelId;
+                let highlightedName = modelName;
+                
+                if (filterText) {
+                    const regex = new RegExp(`(${filterText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                    highlightedId = modelId.replace(regex, '<mark>$1</mark>');
+                    highlightedName = modelName.replace(regex, '<mark>$1</mark>');
+                }
+                
                 html += `
                     <div class="model-item" onclick="selectModel('${modelId}')">
-                        <div class="model-item-id">${modelId}</div>
-                        ${modelName ? `<div class="model-item-name">${modelName}</div>` : ''}
+                        <div class="model-item-id">${highlightedId}</div>
+                        ${modelName ? `<div class="model-item-name">${highlightedName}</div>` : ''}
                     </div>
                 `;
             });
             
             modelsList.innerHTML = html;
             modelsList.style.display = 'block';
+        }
+
+        // 过滤模型列表
+        function filterModels() {
+            const filterText = document.getElementById('modelId').value;
+            const modelsList = document.getElementById('modelsList');
+            
+            // 重置选中索引
+            selectedModelIndex = -1;
+            
+            // 如果没有模型数据，不进行过滤
+            if (allModels.length === 0) {
+                return;
+            }
+            
+            // 如果列表是隐藏的，显示它
+            if (modelsList.style.display === 'none') {
+                modelsList.style.display = 'block';
+            }
+            
+            // 应用过滤
+            showModelsList(allModels, filterText);
+        }
+
+        // 更新模型选择高亮
+        function updateModelSelection(modelItems) {
+            // 移除所有高亮
+            modelItems.forEach((item, index) => {
+                item.classList.remove('model-item-selected');
+                if (index === selectedModelIndex) {
+                    item.classList.add('model-item-selected');
+                    // 滚动到可见区域
+                    item.scrollIntoView({ block: 'nearest' });
+                }
+            });
+        }
+
+        // 如果有可用模型则显示列表
+        function showModelsIfAvailable() {
+            const modelsList = document.getElementById('modelsList');
+            if (allModels.length > 0) {
+                const filterText = document.getElementById('modelId').value;
+                showModelsList(allModels, filterText);
+            }
         }
 
         // 显示模型列表错误
@@ -1375,6 +1512,9 @@
         function selectModel(modelId) {
             document.getElementById('modelId').value = modelId;
             document.getElementById('modelsList').style.display = 'none';
+            
+            // 可选：聚焦到下一个输入字段或保持在当前字段
+            document.getElementById('modelId').focus();
         }
 
         // 点击其他地方时隐藏模型列表
@@ -1387,6 +1527,7 @@
                 event.target !== modelsButton && 
                 event.target !== modelIdInput) {
                 modelsList.style.display = 'none';
+                selectedModelIndex = -1;
             }
         });
 
