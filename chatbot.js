@@ -300,5 +300,56 @@ async function testModelConnection(config) {
     }
 }
 
+// 获取可用模型列表
+async function getAvailableModels(config = null) {
+    try {
+        const testConfig = config || currentConfig;
+        console.log('获取模型列表，使用配置:', {
+            baseURL: testConfig.baseUrl || testConfig.baseURL,
+            hasApiKey: !!testConfig.apiKey
+        });
+
+        // 创建临时客户端
+        const tempClient = new OpenAI({
+            apiKey: testConfig.apiKey,
+            baseURL: testConfig.baseUrl || testConfig.baseURL,
+        });
+
+        // 调用 models 端点
+        const response = await tempClient.models.list();
+        
+        console.log('模型列表获取成功，模型数量:', response.data?.length || 0);
+        
+        return {
+            success: true,
+            models: response.data || [],
+            baseURL: testConfig.baseUrl || testConfig.baseURL
+        };
+    } catch (error) {
+        console.error('获取模型列表失败:', error);
+        
+        let errorMessage = '获取模型列表失败';
+        if (error.message.includes('401') || error.status === 401) {
+            errorMessage = 'API Key 无效、过期或权限不足';
+        } else if (error.message.includes('404') || error.status === 404) {
+            errorMessage = 'Models端点不存在或Base URL错误';
+        } else if (error.message.includes('429') || error.status === 429) {
+            errorMessage = '请求频率过高，请稍后再试';
+        } else if (error.message.includes('network') || error.message.includes('ENOTFOUND')) {
+            errorMessage = '网络连接错误，请检查网络设置';
+        } else if (error.message.includes('timeout')) {
+            errorMessage = '请求超时，请检查网络连接';
+        } else {
+            errorMessage = error.message;
+        }
+        
+        return {
+            success: false,
+            error: errorMessage,
+            details: error.message
+        };
+    }
+}
+
 // Export the agent and functions for use in other modules
-export { agent, handleChatMessage, clearHistory, updateConfig, testModelConnection, getCurrentConfig };
+export { agent, handleChatMessage, clearHistory, updateConfig, testModelConnection, getCurrentConfig, getAvailableModels };

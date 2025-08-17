@@ -506,6 +506,90 @@
             transform: none;
         }
 
+        .btn-models {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            min-width: 40px;
+            padding: 10px;
+        }
+
+        .btn-models:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(23, 162, 184, 0.4);
+        }
+
+        .btn-models:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 模型输入组合样式 */
+        .model-input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .model-input-group .form-input {
+            flex: 1;
+        }
+
+        /* 模型列表样式 */
+        .models-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--container-bg);
+            margin-top: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .model-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+
+        .model-item:hover {
+            background: var(--system-message-bg);
+        }
+
+        .model-item:last-child {
+            border-bottom: none;
+        }
+
+        .model-item-id {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .model-item-name {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .models-loading {
+            padding: 20px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .models-error {
+            padding: 12px;
+            background: #f8d7da;
+            color: #721c24;
+            border-radius: 4px;
+            margin: 8px;
+            font-size: 0.9em;
+        }
+
         .config-note {
             font-size: 0.8em;
             color: var(--text-secondary);
@@ -661,13 +745,19 @@
                 
                 <div class="form-group">
                     <label class="form-label" for="modelId">模型 ID:</label>
-                    <input 
-                        type="text" 
-                        id="modelId" 
-                        class="form-input" 
-                        placeholder="例如: gpt-3.5-turbo, gpt-4"
-                        value=""
-                    />
+                    <div class="model-input-group">
+                        <input 
+                            type="text" 
+                            id="modelId" 
+                            class="form-input" 
+                            placeholder="例如: gpt-3.5-turbo, gpt-4"
+                            value=""
+                        />
+                        <button type="button" class="btn btn-models" id="modelsButton" onclick="fetchAvailableModels()" title="获取可用模型列表">
+                            📋
+                        </button>
+                    </div>
+                    <div id="modelsList" class="models-list" style="display: none;"></div>
                 </div>
                 
                 <div class="form-buttons">
@@ -747,6 +837,24 @@
                 document.getElementById('modelId').value = '';
                 currentModelId = '';
                 updateChatStatusWithModel();
+            }
+        });
+
+        // 监听获取模型列表响应
+        ipcRenderer.on('available-models-response', (event, response) => {
+            const modelsButton = document.getElementById('modelsButton');
+            const modelsList = document.getElementById('modelsList');
+            
+            // 恢复按钮状态
+            modelsButton.disabled = false;
+            modelsButton.innerHTML = '📋';
+            
+            if (response.success) {
+                console.log('模型列表获取成功:', response.models?.length || 0, '个模型');
+                showModelsList(response.models || []);
+            } else {
+                console.error('模型列表获取失败:', response.error);
+                showModelsError(response.error);
             }
         });
         
@@ -1185,6 +1293,102 @@
                 modelId: modelId
             });
         }
+
+        // 获取可用模型列表
+        function fetchAvailableModels() {
+            const baseUrl = document.getElementById('baseUrl').value.trim();
+            const apiKey = document.getElementById('apiKey').value.trim();
+            
+            // 基本验证
+            if (!baseUrl) {
+                showError('请先填写Base URL才能获取模型列表');
+                return;
+            }
+            
+            if (!isValidUrl(baseUrl)) {
+                showError('请输入有效的Base URL格式');
+                return;
+            }
+            
+            if (!apiKey) {
+                showError('请先填写API Key才能获取模型列表');
+                return;
+            }
+            
+            // 设置按钮为加载状态
+            const modelsButton = document.getElementById('modelsButton');
+            modelsButton.disabled = true;
+            modelsButton.innerHTML = '⏳';
+            
+            // 显示加载状态
+            showModelsLoading();
+            
+            // 发送获取模型列表请求到主进程
+            ipcRenderer.send('get-available-models', {
+                baseUrl: baseUrl,
+                apiKey: apiKey
+            });
+        }
+
+        // 显示模型列表加载状态
+        function showModelsLoading() {
+            const modelsList = document.getElementById('modelsList');
+            modelsList.style.display = 'block';
+            modelsList.innerHTML = '<div class="models-loading">正在获取模型列表...</div>';
+        }
+
+        // 显示模型列表
+        function showModelsList(models) {
+            const modelsList = document.getElementById('modelsList');
+            
+            if (!models || models.length === 0) {
+                modelsList.innerHTML = '<div class="models-error">未找到可用的模型</div>';
+                return;
+            }
+            
+            // 构建模型列表HTML
+            let html = '';
+            models.forEach(model => {
+                const modelId = model.id || '';
+                const modelName = model.name || model.owned_by || '';
+                
+                html += `
+                    <div class="model-item" onclick="selectModel('${modelId}')">
+                        <div class="model-item-id">${modelId}</div>
+                        ${modelName ? `<div class="model-item-name">${modelName}</div>` : ''}
+                    </div>
+                `;
+            });
+            
+            modelsList.innerHTML = html;
+            modelsList.style.display = 'block';
+        }
+
+        // 显示模型列表错误
+        function showModelsError(error) {
+            const modelsList = document.getElementById('modelsList');
+            modelsList.innerHTML = `<div class="models-error">获取模型列表失败: ${error}</div>`;
+            modelsList.style.display = 'block';
+        }
+
+        // 选择模型
+        function selectModel(modelId) {
+            document.getElementById('modelId').value = modelId;
+            document.getElementById('modelsList').style.display = 'none';
+        }
+
+        // 点击其他地方时隐藏模型列表
+        document.addEventListener('click', function(event) {
+            const modelsList = document.getElementById('modelsList');
+            const modelsButton = document.getElementById('modelsButton');
+            const modelIdInput = document.getElementById('modelId');
+            
+            if (!modelsList.contains(event.target) && 
+                event.target !== modelsButton && 
+                event.target !== modelIdInput) {
+                modelsList.style.display = 'none';
+            }
+        });
 
         // 显示测试成功消息
         function showTestSuccess(response) {
