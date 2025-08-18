@@ -6,7 +6,17 @@ const electronAPI = {
     getMcpConfig: () => {
         return new Promise((resolve, reject) => {
             const { ipcRenderer } = require('electron');
+            
+            // 清除可能存在的旧监听器
+            ipcRenderer.removeAllListeners('current-mcp-config-response');
+            
+            const timeout = setTimeout(() => {
+                ipcRenderer.removeAllListeners('current-mcp-config-response');
+                reject(new Error('获取配置超时'));
+            }, 5000);
+            
             ipcRenderer.once('current-mcp-config-response', (event, response) => {
+                clearTimeout(timeout);
                 if (response.success) {
                     resolve(response.config);
                 } else {
@@ -34,13 +44,24 @@ const electronAPI = {
     connectMcpServer: (server) => {
         return new Promise((resolve, reject) => {
             const { ipcRenderer } = require('electron');
+            
+            // 清除可能存在的旧监听器
+            ipcRenderer.removeAllListeners('connect-mcp-server-response');
+            
+            const timeout = setTimeout(() => {
+                ipcRenderer.removeAllListeners('connect-mcp-server-response');
+                reject(new Error('连接超时'));
+            }, 10000);
+            
             ipcRenderer.once('connect-mcp-server-response', (event, response) => {
+                clearTimeout(timeout);
                 if (response.success) {
                     resolve(response);
                 } else {
                     reject(new Error(response.error));
                 }
             });
+            
             ipcRenderer.send('connect-mcp-server', server);
         });
     },
@@ -118,9 +139,19 @@ const MCPPanel = {
         });
 
         // 方法
+        const isLoadingConfig = ref(false);
+        
         const loadMcpConfig = async () => {
+            if (isLoadingConfig.value) {
+                console.log('配置正在加载中，跳过重复请求');
+                return;
+            }
+            
             try {
+                isLoadingConfig.value = true;
                 isLoading.value = true;
+                console.log('开始加载MCP配置');
+                
                 // 调用主进程的API加载配置
                 const config = await window.electronAPI.getMcpConfig();
                 if (config && config.mcpServers) {
@@ -128,11 +159,17 @@ const MCPPanel = {
                         id,
                         ...serverConfig
                     }));
+                    console.log('MCP配置加载成功，服务器数量:', mcpServers.value.length);
+                } else {
+                    console.log('未找到MCP服务器配置');
+                    mcpServers.value = [];
                 }
             } catch (error) {
                 console.error('加载MCP配置失败:', error);
                 showNotification('加载配置失败: ' + error.message, 'error');
+                mcpServers.value = [];
             } finally {
+                isLoadingConfig.value = false;
                 isLoading.value = false;
             }
         };
@@ -210,6 +247,14 @@ const MCPPanel = {
         };
 
         const connectServer = async (server) => {
+            if (!server || !server.baseUrl) {
+                console.warn('无效的服务器配置:', server);
+                showNotification('无效的服务器配置', 'error');
+                return;
+            }
+            
+            console.log('尝试连接服务器:', server.name || server.id);
+            
             try {
                 isLoading.value = true;
                 const result = await window.electronAPI.connectMcpServer(server);
@@ -221,7 +266,11 @@ const MCPPanel = {
                     throw new Error(result.error);
                 }
             } catch (error) {
-                console.error('连接服务器失败:', error);
+                console.error('连接服务器失败:', {
+                    serverName: server.name || server.id,
+                    error: error.message,
+                    stack: error.stack
+                });
                 server.connected = false;
                 showNotification('连接失败: ' + error.message, 'error');
             } finally {

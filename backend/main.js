@@ -5,6 +5,22 @@ import { handleChatMessage, clearHistory, updateConfig, testModelConnection, get
 import { loadMcpConfig, saveMcpConfig, getCurrentMcpConfig, updateMcpConfig, getMcpConfigFilePath, initializeMcpServers, closeMcpServers, getConnectedMcpServers } from './mcpserver.js';
 import { marked } from 'marked';
 
+// 设置控制台编码为UTF-8（仅在Windows下）
+if (process.platform === 'win32') {
+    try {
+        // 设置Node.js输出编码
+        if (process.stdout.setEncoding) {
+            process.stdout.setEncoding('utf8');
+        }
+        if (process.stderr.setEncoding) {
+            process.stderr.setEncoding('utf8');
+        }
+        console.log('已设置控制台编码为UTF-8');
+    } catch (error) {
+        console.warn('设置编码失败:', error.message);
+    }
+}
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // 保持对窗口对象的全局引用，如果不这样做，当 JavaScript 对象被垃圾回收时，窗口会自动关闭。
@@ -24,7 +40,7 @@ function createWindow() {
   });
 
   // 加载应用的 index.html
-  mainWindow.loadFile('index.html');
+  mainWindow.loadFile(path.join(__dirname, '../frontend/index.html'));
 
   // 窗口最大化
   mainWindow.maximize();

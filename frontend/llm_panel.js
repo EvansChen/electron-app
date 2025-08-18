@@ -439,7 +439,7 @@ const LLMPanel = {
                             :disabled="availableModels.length === 0"
                             title="显示所有模型"
                         >
-                            🔄
+                            ...
                         </button>
                         
                         <div v-if="showModels && Object.keys(groupedModels).length > 0" class="models-list">
