@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { handleChatMessage, clearHistory, updateConfig, testModelConnection, getCurrentConfig, getAvailableModels, getConfigFilePath } from './chatbot.js';
-import { loadMcpConfig, saveMcpConfig, getCurrentMcpConfig, updateMcpConfig, getMcpConfigFilePath } from './mcpserver.js';
+import { loadMcpConfig, saveMcpConfig, getCurrentMcpConfig, updateMcpConfig, getMcpConfigFilePath, initializeMcpServers, closeMcpServers, getConnectedMcpServers } from './mcpserver.js';
 import { marked } from 'marked';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -67,8 +67,6 @@ app.on('activate', () => {
 // IPC 通信处理 - 与聊天机器人交互
 ipcMain.on('chatbot-message', async (event, message) => {
   try {
-    console.log('收到聊天消息:', message);
-    
     // 调用 chatbot.js 脚本
     const response = await callChatbot(message);
     
@@ -83,7 +81,6 @@ ipcMain.on('chatbot-message', async (event, message) => {
 // IPC 通信处理 - 清除聊天历史
 ipcMain.on('clear-history', (event) => {
   try {
-    console.log('收到清除历史请求');
     clearHistory();
     event.reply('clear-history-response', { success: true });
   } catch (error) {
@@ -95,7 +92,6 @@ ipcMain.on('clear-history', (event) => {
 // IPC 通信处理 - 更新LLM配置
 ipcMain.on('update-llm-config', (event, config) => {
   try {
-    console.log('收到更新配置请求:', config);
     const result = updateConfig(config);
     event.reply('update-config-response', result);
   } catch (error) {
@@ -107,7 +103,6 @@ ipcMain.on('update-llm-config', (event, config) => {
 // IPC 通信处理 - 测试模型连通性
 ipcMain.on('test-model-connection', async (event, config) => {
   try {
-    console.log('收到测试连接请求:', config);
     const result = await testModelConnection(config);
     event.reply('test-connection-response', result);
   } catch (error) {
@@ -119,7 +114,6 @@ ipcMain.on('test-model-connection', async (event, config) => {
 // IPC 通信处理 - 获取当前配置
 ipcMain.on('get-current-config', (event) => {
   try {
-    console.log('收到获取配置请求');
     const config = getCurrentConfig();
     event.reply('current-config-response', { success: true, config: config });
   } catch (error) {
@@ -131,7 +125,6 @@ ipcMain.on('get-current-config', (event) => {
 // IPC 通信处理 - 获取可用模型列表
 ipcMain.on('get-available-models', async (event, config) => {
   try {
-    console.log('收到获取模型列表请求:', config);
     const result = await getAvailableModels(config);
     event.reply('available-models-response', result);
   } catch (error) {
@@ -143,7 +136,6 @@ ipcMain.on('get-available-models', async (event, config) => {
 // IPC 通信处理 - 获取配置文件路径
 ipcMain.on('get-config-file-path', (event) => {
   try {
-    console.log('收到获取配置文件路径请求');
     const configPath = getConfigFilePath();
     event.reply('config-file-path-response', { success: true, path: configPath });
   } catch (error) {
@@ -155,7 +147,6 @@ ipcMain.on('get-config-file-path', (event) => {
 // IPC 通信处理 - 获取当前MCP配置
 ipcMain.on('get-current-mcp-config', (event) => {
   try {
-    console.log('收到获取MCP配置请求');
     const config = getCurrentMcpConfig();
     event.reply('current-mcp-config-response', { success: true, config: config });
   } catch (error) {
@@ -167,7 +158,6 @@ ipcMain.on('get-current-mcp-config', (event) => {
 // IPC 通信处理 - 更新MCP配置
 ipcMain.on('update-mcp-config', (event, config) => {
   try {
-    console.log('收到更新MCP配置请求:', config);
     const result = updateMcpConfig(config);
     event.reply('update-mcp-config-response', result);
   } catch (error) {
@@ -179,7 +169,6 @@ ipcMain.on('update-mcp-config', (event, config) => {
 // IPC 通信处理 - 获取MCP配置文件路径
 ipcMain.on('get-mcp-config-file-path', (event) => {
   try {
-    console.log('收到获取MCP配置文件路径请求');
     const configPath = getMcpConfigFilePath();
     event.reply('mcp-config-file-path-response', { success: true, path: configPath });
   } catch (error) {
@@ -191,7 +180,6 @@ ipcMain.on('get-mcp-config-file-path', (event) => {
 // IPC 通信处理 - 获取MCP配置
 ipcMain.on('get-mcp-config', (event) => {
   try {
-    console.log('收到获取MCP配置请求');
     const config = getCurrentMcpConfig();
     event.reply('mcp-config-response', { success: true, config: config });
   } catch (error) {
@@ -203,12 +191,90 @@ ipcMain.on('get-mcp-config', (event) => {
 // IPC 通信处理 - 保存MCP配置
 ipcMain.on('save-mcp-config', (event, config) => {
   try {
-    console.log('收到保存MCP配置请求:', config);
     const result = saveMcpConfig(config);
     event.reply('mcp-config-save-response', { success: true, message: '配置保存成功' });
   } catch (error) {
     console.error('保存MCP配置错误:', error);
     event.reply('mcp-config-save-response', { success: false, error: error.message });
+  }
+});
+
+// IPC 通信处理 - 初始化MCP服务器
+ipcMain.on('initialize-mcp-servers', async (event) => {
+  try {
+    const servers = await initializeMcpServers();
+    event.reply('initialize-mcp-servers-response', { success: true, servers: servers });
+  } catch (error) {
+    console.error('初始化MCP服务器错误:', error);
+    event.reply('initialize-mcp-servers-response', { success: false, error: error.message });
+  }
+});
+
+// IPC 通信处理 - 获取已连接的MCP服务器
+ipcMain.on('get-connected-mcp-servers', (event) => {
+  try {
+    const servers = getConnectedMcpServers();
+    event.reply('connected-mcp-servers-response', { success: true, servers: servers });
+  } catch (error) {
+    console.error('获取已连接MCP服务器错误:', error);
+    event.reply('connected-mcp-servers-response', { success: false, error: error.message });
+  }
+});
+
+// IPC 通信处理 - 关闭MCP服务器连接
+ipcMain.on('close-mcp-servers', async (event) => {
+  try {
+    await closeMcpServers();
+    event.reply('close-mcp-servers-response', { success: true, message: '所有MCP服务器连接已关闭' });
+  } catch (error) {
+    console.error('关闭MCP服务器错误:', error);
+    event.reply('close-mcp-servers-response', { success: false, error: error.message });
+  }
+});
+
+// IPC 通信处理 - 连接单个MCP服务器
+ipcMain.on('connect-mcp-server', async (event, serverConfig) => {
+  try {
+    // 这里可以调用单个服务器连接的逻辑
+    // 暂时返回模拟结果
+    const result = {
+      success: true,
+      tools: [
+        { name: 'parse_url', description: '解析网页URL内容' },
+        { name: 'search_web', description: '搜索互联网内容' }
+      ]
+    };
+    event.reply('connect-mcp-server-response', result);
+  } catch (error) {
+    console.error('连接MCP服务器错误:', error);
+    event.reply('connect-mcp-server-response', { success: false, error: error.message });
+  }
+});
+
+// IPC 通信处理 - 断开MCP服务器连接
+ipcMain.on('disconnect-mcp-server', async (event, serverId) => {
+  try {
+    // 这里可以调用断开服务器连接的逻辑
+    event.reply('disconnect-mcp-server-response', { success: true });
+  } catch (error) {
+    console.error('断开MCP服务器错误:', error);
+    event.reply('disconnect-mcp-server-response', { success: false, error: error.message });
+  }
+});
+
+// IPC 通信处理 - 测试MCP工具
+ipcMain.on('test-mcp-tool', async (event, options) => {
+  try {
+    // 这里可以调用实际的工具测试逻辑
+    // 暂时返回模拟结果
+    const result = {
+      success: Math.random() > 0.3, // 70% 成功率
+      data: `测试工具 ${options.toolName} 执行结果: ${JSON.stringify(options.parameters)}`
+    };
+    event.reply('test-mcp-tool-response', result);
+  } catch (error) {
+    console.error('测试MCP工具错误:', error);
+    event.reply('test-mcp-tool-response', { success: false, error: error.message });
   }
 });
 

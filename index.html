@@ -4,820 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>私人助理</title>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
-    <style>
-        :root {
-            /* Light mode colors */
-            --bg-gradient-start: #667eea;
-            --bg-gradient-end: #764ba2;
-            --container-bg: #ffffff;
-            --messages-bg: #f8f9fa;
-            --border-color: #e9ecef;
-            --text-primary: #333333;
-            --text-secondary: #6c757d;
-            --header-bg-start: #667eea;
-            --header-bg-end: #764ba2;
-            --header-text: #ffffff;
-            --bot-message-bg: #ffffff;
-            --bot-message-text: #333333;
-            --bot-message-border: #e9ecef;
-            --scrollbar-track: #f1f1f1;
-            --scrollbar-thumb: #c1c1c1;
-            --scrollbar-thumb-hover: #a8a8a8;
-            --system-message-bg: #e9ecef;
-        }
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https:; img-src 'self' data:;">
+    <!-- Vue.js CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Index CSS -->
+    <link rel="stylesheet" href="index.css">
+    <!-- MCP Panel CSS -->
+    <link rel="stylesheet" href="mcp_panel.css">
+    <!-- LLM Panel CSS -->
+    <link rel="stylesheet" href="llm_panel.css">
 
-        [data-theme="dark"] {
-            /* Dark mode colors */
-            --bg-gradient-start: #1a1a2e;
-            --bg-gradient-end: #16213e;
-            --container-bg: #2d3748;
-            --messages-bg: #1a202c;
-            --border-color: #4a5568;
-            --text-primary: #e2e8f0;
-            --text-secondary: #a0aec0;
-            --header-bg-start: #2d3748;
-            --header-bg-end: #1a202c;
-            --header-text: #e2e8f0;
-            --bot-message-bg: #4a5568;
-            --bot-message-text: #e2e8f0;
-            --bot-message-border: #718096;
-            --scrollbar-track: #2d3748;
-            --scrollbar-thumb: #4a5568;
-            --scrollbar-thumb-hover: #718096;
-            --system-message-bg: #4a5568;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            color: var(--text-primary);
-            transition: all 0.3s ease;
-        }
-
-        .chat-container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background: var(--container-bg);
-            margin: 20px;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .chat-header {
-            background: linear-gradient(135deg, var(--header-bg-start) 0%, var(--header-bg-end) 100%);
-            color: var(--header-text);
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: relative;
-        }
-
-        .chat-header h1 {
-            font-size: 1.5em;
-            font-weight: 600;
-        }
-
-        .chat-status {
-            font-size: 0.9em;
-            opacity: 0.9;
-            margin-top: 5px;
-        }
-
-        .theme-toggle {
-            position: absolute;
-            top: 15px;
-            left: 20px;
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: var(--header-text);
-            padding: 8px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.8em;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .theme-toggle:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.05);
-        }
-
-        .config-button {
-            position: absolute;
-            top: 15px;
-            left: 120px;
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: var(--header-text);
-            padding: 8px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.8em;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .config-button:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.05);
-        }
-
-        .mcp-button {
-            position: absolute;
-            top: 15px;
-            left: 220px;
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: var(--header-text);
-            padding: 8px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.8em;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .mcp-button:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.05);
-        }
-
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background: var(--messages-bg);
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            transition: all 0.3s ease;
-        }
-
-        .message {
-            max-width: 80%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            word-wrap: break-word;
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .message.user {
-            align-self: flex-end;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-bottom-right-radius: 6px;
-        }
-
-        .message.bot {
-            align-self: flex-start;
-            background: var(--bot-message-bg);
-            color: var(--bot-message-text);
-            border: 1px solid var(--bot-message-border);
-            border-bottom-left-radius: 6px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        .message.system {
-            align-self: center;
-            background: var(--system-message-bg);
-            color: var(--text-secondary);
-            font-size: 0.9em;
-            border-radius: 12px;
-            max-width: 60%;
-            text-align: center;
-        }
-
-        .message-time {
-            font-size: 0.7em;
-            opacity: 0.7;
-            margin-top: 5px;
-            text-align: right;
-        }
-
-        .bot .message-time {
-            text-align: left;
-        }
-
-        .chat-input-container {
-            padding: 20px;
-            background: var(--container-bg);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-            transition: all 0.3s ease;
-        }
-
-        .chat-input {
-            flex: 1;
-            border: 2px solid var(--border-color);
-            border-radius: 20px;
-            padding: 12px 16px;
-            font-size: 14px;
-            outline: none;
-            resize: none;
-            max-height: 100px;
-            min-height: 44px;
-            font-family: inherit;
-            transition: border-color 0.2s;
-            background: var(--container-bg);
-            color: var(--text-primary);
-        }
-
-        .chat-input:focus {
-            border-color: #667eea;
-        }
-
-        .send-button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            font-size: 16px;
-        }
-
-        .send-button:hover:not(:disabled) {
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .send-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .typing-indicator {
-            display: none;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            font-style: italic;
-            padding: 10px 16px;
-        }
-
-        .typing-dots {
-            display: flex;
-            gap: 3px;
-        }
-
-        .typing-dot {
-            width: 6px;
-            height: 6px;
-            background: var(--text-secondary);
-            border-radius: 50%;
-            animation: typing 1.4s infinite ease-in-out;
-        }
-
-        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-
-        @keyframes typing {
-            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
-            40% { transform: scale(1); opacity: 1; }
-        }
-
-        .error-message {
-            background: #dc3545;
-            color: white;
-            padding: 10px;
-            margin: 10px 20px;
-            border-radius: 8px;
-            font-size: 0.9em;
-            text-align: center;
-        }
-
-        .clear-chat {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 0.8em;
-            transition: all 0.2s;
-        }
-
-        .clear-chat:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        /* 复制按钮样式 */
-        .copy-button {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: rgba(0,0,0,0.1);
-            border: 1px solid rgba(0,0,0,0.2);
-            color: var(--text-secondary);
-            padding: 4px 8px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 0.7em;
-            opacity: 0;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 2px;
-        }
-
-        .message.bot {
-            position: relative;
-        }
-
-        .message.bot:hover .copy-button {
-            opacity: 1;
-        }
-
-        .copy-button:hover {
-            background: rgba(0,0,0,0.2);
-            transform: scale(1.05);
-        }
-
-        .copy-button.copied {
-            background: #28a745;
-            color: white;
-            border-color: #28a745;
-        }
-
-        /* 滚动条样式 */
-        .chat-messages::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .chat-messages::-webkit-scrollbar-track {
-            background: var(--scrollbar-track);
-            border-radius: 3px;
-        }
-
-        .chat-messages::-webkit-scrollbar-thumb {
-            background: var(--scrollbar-thumb);
-            border-radius: 3px;
-        }
-
-        .chat-messages::-webkit-scrollbar-thumb:hover {
-            background: var(--scrollbar-thumb-hover);
-        }
-
-        /* 响应式设计 */
-        @media (max-width: 768px) {
-            .chat-container {
-                margin: 10px;
-                border-radius: 10px;
-            }
-            
-            .message {
-                max-width: 90%;
-            }
-        }
-
-        /* 配置面板样式 */
-        .config-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-
-        .config-panel {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--container-bg);
-            border-radius: 15px;
-            padding: 30px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            border: 1px solid var(--border-color);
-        }
-
-        .config-header {
-            text-align: center;
-            margin-bottom: 25px;
-            color: var(--text-primary);
-            font-size: 1.3em;
-            font-weight: 600;
-        }
-
-        .config-form {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .form-label {
-            color: var(--text-primary);
-            font-weight: 500;
-            font-size: 0.9em;
-        }
-
-        .form-input {
-            padding: 12px 16px;
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-            font-size: 14px;
-            background: var(--container-bg);
-            color: var(--text-primary);
-            transition: border-color 0.2s;
-            outline: none;
-        }
-
-        .form-input:focus {
-            border-color: #667eea;
-        }
-
-        .form-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-secondary {
-            background: var(--border-color);
-            color: var(--text-primary);
-        }
-
-        .btn-secondary:hover {
-            background: var(--text-secondary);
-            color: white;
-        }
-
-        .btn-test {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-        }
-
-        .btn-test:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
-        }
-
-        .btn-test:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-models {
-            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-            color: white;
-            min-width: 40px;
-            padding: 10px;
-        }
-
-        .btn-models:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 5px 15px rgba(23, 162, 184, 0.4);
-        }
-
-        .btn-models:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* 模型输入组合样式 */
-        .model-input-group {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .model-input-group .form-input {
-            flex: 1;
-        }
-
-        /* 模型列表样式 */
-        .models-list {
-            max-height: 200px;
-            overflow-y: auto;
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            background: var(--container-bg);
-            margin-top: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .model-item {
-            padding: 8px 12px;
-            cursor: pointer;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-primary);
-            font-size: 0.9em;
-            transition: background-color 0.2s;
-        }
-
-        .model-item:hover {
-            background: var(--system-message-bg);
-        }
-
-        .model-item-selected {
-            background: #667eea !important;
-            color: white !important;
-        }
-
-        .model-item-selected .model-item-id,
-        .model-item-selected .model-item-name {
-            color: white !important;
-        }
-
-        .model-item:last-child {
-            border-bottom: none;
-        }
-
-        .model-item-id {
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-
-        .model-item-name {
-            font-size: 0.8em;
-            color: var(--text-secondary);
-            margin-top: 2px;
-        }
-
-        .models-loading {
-            padding: 20px;
-            text-align: center;
-            color: var(--text-secondary);
-            font-style: italic;
-        }
-
-        .models-error {
-            padding: 12px;
-            background: #f8d7da;
-            color: #721c24;
-            border-radius: 4px;
-            margin: 8px;
-            font-size: 0.9em;
-        }
-
-        /* 高亮匹配文本样式 */
-        .model-item mark {
-            background-color: #ffeb3b;
-            color: #333;
-            padding: 1px 2px;
-            border-radius: 2px;
-            font-weight: bold;
-        }
-
-        [data-theme="dark"] .model-item mark {
-            background-color: #ffc107;
-            color: #000;
-        }
-
-        .config-note {
-            font-size: 0.8em;
-            color: var(--text-secondary);
-            margin-top: 15px;
-            padding: 10px;
-            background: var(--system-message-bg);
-            border-radius: 8px;
-            line-height: 1.4;
-        }
-
-        /* API Key 字段样式 */
-        .password-field {
-            position: relative;
-            display: flex;
-            align-items: center;
-            width: 100%;
-            max-width: 100%;
-        }
-
-        .password-field .form-input {
-            padding-right: 45px; /* 为按钮留出空间 */
-            width: 100%;
-            flex: 1;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 10px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 5px;
-            color: var(--text-secondary);
-            font-size: 0.9em;
-            transition: all 0.2s;
-            border-radius: 4px;
-        }
-
-        .password-toggle:hover {
-            background: var(--border-color);
-            color: var(--text-primary);
-        }
-
-        .password-toggle:focus {
-            outline: none;
-            background: var(--border-color);
-        }
-
-        /* 键盘导航支持 */
-        .password-toggle:focus-visible {
-            outline: 2px solid #667eea;
-            outline-offset: 1px;
-        }
-
-        /* 帮助文本样式 */
-        .field-help {
-            font-size: 0.75em;
-            color: var(--text-secondary);
-            margin-top: 4px;
-            display: block;
-            line-height: 1.3;
-        }
-
-        /* MCP 配置面板样式 */
-        .mcp-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-
-        .mcp-panel {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--container-bg);
-            border-radius: 15px;
-            padding: 30px;
-            width: 90%;
-            max-width: 700px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            border: 1px solid var(--border-color);
-        }
-
-        .mcp-header {
-            text-align: center;
-            margin-bottom: 25px;
-            color: var(--text-primary);
-            font-size: 1.3em;
-            font-weight: 600;
-        }
-
-        .json-editor-container {
-            margin-bottom: 20px;
-        }
-
-        .json-editor {
-            width: 100%;
-            height: 400px;
-            padding: 15px;
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 13px;
-            background: var(--messages-bg);
-            color: var(--text-primary);
-            outline: none;
-            resize: vertical;
-            line-height: 1.4;
-        }
-
-        .json-editor:focus {
-            border-color: #667eea;
-        }
-
-        .json-status {
-            margin-top: 10px;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.85em;
-            font-weight: 500;
-        }
-
-        .json-status.valid {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .json-status.invalid {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        [data-theme="dark"] .json-status.valid {
-            background: #1e4b2d;
-            color: #9fdf9f;
-            border: 1px solid #2d5e3d;
-        }
-
-        [data-theme="dark"] .json-status.invalid {
-            background: #4b1e1e;
-            color: #df9f9f;
-            border: 1px solid #5e2d2d;
-        }
-
-        .mcp-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
-        }
-
-        .btn-format {
-            background: linear-gradient(135deg, #6f42c1 0%, #8b5cf6 100%);
-            color: white;
-        }
-
-        .btn-format:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 5px 15px rgba(111, 66, 193, 0.4);
-        }
-
-        .btn-reload {
-            background: linear-gradient(135deg, #fd7e14 0%, #ff922b 100%);
-            color: white;
-        }
-
-        .btn-reload:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 5px 15px rgba(253, 126, 20, 0.4);
-        }
-    </style>
 </head>
 <body>
     <div class="chat-container">
@@ -826,11 +22,11 @@
                 <span id="themeIcon">🌙</span>
                 <span id="themeText">暗黑</span>
             </button>
-            <button class="config-button" onclick="openConfigModal()">
-                <span>⚙️</span>
+            <button class="config-button" onclick="openLLMPanel()">
+                <span>🧠</span>
                 <span>模型</span>
             </button>
-            <button class="mcp-button" onclick="openMcpModal()">
+            <button class="mcp-button" onclick="openMcpPanel()">
                 <span>🔧</span>
                 <span>MCP</span>
             </button>
@@ -869,128 +65,36 @@
         </div>
     </div>
 
-    <!-- 配置面板模态框 -->
-    <div class="config-modal" id="configModal">
-        <div class="config-panel">
-            <div class="config-header">
-                🤖 LLM 配置设置
+    <!-- 新的 MCP Vue 面板模态框 -->
+    <div class="mcp-vue-modal" id="mcpVueModal">
+        <div class="mcp-vue-panel">
+            <div class="mcp-vue-header">
+                <h3>🛠️ MCP 服务器管理面板</h3>
+                <button onclick="closeMcpPanel()" class="btn btn-close">×</button>
             </div>
-            <form class="config-form" id="configForm">
-                <div class="form-group">
-                    <label class="form-label" for="baseUrl">Base URL:</label>
-                    <input 
-                        type="text" 
-                        id="baseUrl" 
-                        class="form-input" 
-                        placeholder="例如: https://api.openai.com/v1"
-                        value=""
-                    />
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="apiKey">API Key:</label>
-                    <div class="password-field">
-                        <input 
-                            type="password" 
-                            id="apiKey" 
-                            class="form-input" 
-                            placeholder="输入您的 API Key"
-                            value=""
-                            aria-describedby="apiKeyHelp"
-                        />
-                        <button 
-                            type="button" 
-                            class="password-toggle" 
-                            onclick="togglePasswordVisibility()" 
-                            id="passwordToggle" 
-                            title="显示密码"
-                            aria-label="显示密码"
-                            tabindex="0"
-                        >
-                            👁️
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="modelId">模型 ID:</label>
-                    <div class="model-input-group">
-                        <input 
-                            type="text" 
-                            id="modelId" 
-                            class="form-input" 
-                            placeholder="例如: gpt-3.5-turbo, gpt-4, 或输入关键词过滤模型"
-                            value=""
-                            oninput="filterModels()"
-                            onfocus="showModelsIfAvailable()"
-                        />
-                        <button type="button" class="btn btn-models" id="modelsButton" onclick="fetchAvailableModels()" title="获取可用模型列表">
-                            📋
-                        </button>
-                    </div>
-                    <div id="modelsList" class="models-list" style="display: none;"></div>
-                </div>
-                
-                <div class="form-buttons">
-                    <button type="button" class="btn btn-secondary" onclick="closeConfigModal()">
-                        取消
-                    </button>
-                    <button type="button" class="btn btn-test" id="testButton" onclick="testConnection()">
-                        🔗 测试连接
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="saveConfig()">
-                        保存配置
-                    </button>
-                </div>
-                
-                <div class="config-note">
-                    💡 提示：配置信息将安全保存在本地，用于与AI服务进行通信。请确保API Key的安全性。
-                    <div id="configPathInfo" style="margin-top: 8px; font-size: 0.8em; color: var(--text-secondary);">
-                        配置文件路径：加载中...
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MCP 配置面板模态框 -->
-    <div class="mcp-modal" id="mcpModal">
-        <div class="mcp-panel">
-            <div class="mcp-header">
-                🔧 MCP 服务器配置
-            </div>
-            <div class="json-editor-container">
-                <label class="form-label" for="mcpJsonEditor">配置内容 (JSON格式):</label>
-                <textarea 
-                    id="mcpJsonEditor" 
-                    class="json-editor" 
-                    placeholder="正在加载 MCP 配置..."
-                ></textarea>
-                <div id="jsonStatus" class="json-status" style="display: none;"></div>
-            </div>
-            
-            <div class="mcp-buttons">
-                <button type="button" class="btn btn-secondary" onclick="closeMcpModal()">
-                    取消
-                </button>
-                <button type="button" class="btn btn-reload" onclick="reloadMcpConfig()">
-                    🔄 重新加载
-                </button>
-                <button type="button" class="btn btn-format" onclick="formatMcpJson()">
-                    🎨 格式化
-                </button>
-                <button type="button" class="btn btn-primary" onclick="saveMcpConfig()">
-                    保存配置
-                </button>
-            </div>
-            
-            <div class="config-note">
-                💡 提示：MCP (Model Context Protocol) 服务器配置用于扩展AI助手的能力。
-                请确保JSON格式正确，配置将保存到：<code>%APPDATA%\electron-app\mcpserver.json</code>
+            <div class="mcp-vue-content" id="mcpVueContent">
+                <!-- Vue 组件将在这里渲染 -->
             </div>
         </div>
     </div>
 
+    <!-- LLM Vue 面板模态框 -->
+    <div class="mcp-vue-modal" id="llmVueModal">
+        <div class="mcp-vue-panel">
+            <div class="mcp-vue-header">
+                <h3>🤖 LLM 配置管理面板</h3>
+                <button onclick="closeLLMPanel()" class="btn btn-close">×</button>
+            </div>
+            <div class="mcp-vue-content" id="llmVueContent">
+                <!-- Vue 组件将在这里渲染 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MCP Panel JS -->
+    <script src="mcp_panel.js"></script>
+    <!-- LLM Panel JS -->
+    <script src="llm_panel.js"></script>
     <script>
         const { ipcRenderer } = require('electron');
         
@@ -1016,16 +120,10 @@
 
         // 监听测试连接响应
         ipcRenderer.on('test-connection-response', (event, response) => {
-            const testButton = document.getElementById('testButton');
-            testButton.disabled = false;
-            testButton.innerHTML = '🔗 测试连接';
-            
             if (response.success) {
                 console.log('连接测试成功:', response);
-                showTestSuccess(response);
             } else {
                 console.error('连接测试失败:', response.error);
-                showTestError(response.error);
             }
         });
 
@@ -1033,10 +131,6 @@
         ipcRenderer.on('current-config-response', (event, response) => {
             if (response.success && response.config) {
                 console.log('获取到保存的配置:', response.config);
-                // 更新表单字段
-                document.getElementById('baseUrl').value = response.config.baseURL || '';
-                document.getElementById('apiKey').value = response.config.apiKey || '';
-                document.getElementById('modelId').value = response.config.modelId || '';
                 
                 // 保存当前模型ID并更新状态显示
                 currentModelId = response.config.modelId || '';
@@ -1044,9 +138,6 @@
             } else {
                 console.log('获取配置失败，使用默认值:', response.error);
                 // 如果无法从后端获取配置，使用空值
-                document.getElementById('baseUrl').value = '';
-                document.getElementById('apiKey').value = '';
-                document.getElementById('modelId').value = '';
                 currentModelId = '';
                 updateChatStatusWithModel();
             }
@@ -1054,53 +145,19 @@
 
         // 监听获取模型列表响应
         ipcRenderer.on('available-models-response', (event, response) => {
-            const modelsButton = document.getElementById('modelsButton');
-            const modelsList = document.getElementById('modelsList');
-            
-            // 恢复按钮状态
-            modelsButton.disabled = false;
-            modelsButton.innerHTML = '📋';
-            
             if (response.success) {
                 console.log('模型列表获取成功:', response.models?.length || 0, '个模型');
-                showModelsList(response.models || []);
             } else {
                 console.error('模型列表获取失败:', response.error);
-                showModelsError(response.error);
             }
         });
 
         // 监听获取配置文件路径响应
         ipcRenderer.on('config-file-path-response', (event, response) => {
-            const configPathInfo = document.getElementById('configPathInfo');
             if (response.success) {
-                configPathInfo.textContent = `配置文件路径：${response.path}`;
-                configPathInfo.title = response.path; // 添加悬停提示
+                console.log('配置文件路径:', response.path);
             } else {
-                configPathInfo.textContent = '配置文件路径：获取失败';
                 console.error('获取配置文件路径失败:', response.error);
-            }
-        });
-
-        // 监听MCP配置相关响应
-        ipcRenderer.on('mcp-config-response', (event, response) => {
-            if (response.success) {
-                const editor = document.getElementById('mcpJsonEditor');
-                editor.value = JSON.stringify(response.config, null, 2);
-                validateMcpJson();
-            } else {
-                console.error('获取MCP配置失败:', response.error);
-                showError('获取MCP配置失败: ' + response.error);
-            }
-        });
-
-        ipcRenderer.on('mcp-config-save-response', (event, response) => {
-            if (response.success) {
-                showMcpSuccess('MCP配置保存成功！');
-                closeMcpModal();
-            } else {
-                console.error('保存MCP配置失败:', response.error);
-                showError('保存MCP配置失败: ' + response.error);
             }
         });
         
@@ -1126,57 +183,8 @@
             const savedTheme = localStorage.getItem('theme') || 'light';
             setTheme(savedTheme);
             
-            // 加载保存的配置
-            loadConfig();
-            
-            // 添加API Key字段的键盘支持
-            const apiKeyInput = document.getElementById('apiKey');
-            if (apiKeyInput) {
-                apiKeyInput.addEventListener('keydown', function(e) {
-                    // Ctrl+Shift+V 切换密码可见性
-                    if (e.ctrlKey && e.shiftKey && e.key === 'V') {
-                        e.preventDefault();
-                        togglePasswordVisibility();
-                    }
-                });
-            }
-            
-            // 添加模型ID字段的键盘导航支持
-            const modelIdInput = document.getElementById('modelId');
-            if (modelIdInput) {
-                modelIdInput.addEventListener('keydown', function(e) {
-                    const modelsList = document.getElementById('modelsList');
-                    const isListVisible = modelsList.style.display !== 'none';
-                    
-                    if (!isListVisible) return;
-                    
-                    const modelItems = modelsList.querySelectorAll('.model-item');
-                    
-                    switch(e.key) {
-                        case 'ArrowDown':
-                            e.preventDefault();
-                            selectedModelIndex = Math.min(selectedModelIndex + 1, modelItems.length - 1);
-                            updateModelSelection(modelItems);
-                            break;
-                        case 'ArrowUp':
-                            e.preventDefault();
-                            selectedModelIndex = Math.max(selectedModelIndex - 1, -1);
-                            updateModelSelection(modelItems);
-                            break;
-                        case 'Enter':
-                            e.preventDefault();
-                            if (selectedModelIndex >= 0 && selectedModelIndex < modelItems.length) {
-                                modelItems[selectedModelIndex].click();
-                            }
-                            break;
-                        case 'Escape':
-                            e.preventDefault();
-                            modelsList.style.display = 'none';
-                            selectedModelIndex = -1;
-                            break;
-                    }
-                });
-            }
+            // 获取当前配置并更新状态
+            requestCurrentConfig();
         });
 
         // 主题切换功能
@@ -1202,6 +210,11 @@
             }
         }
 
+        // 请求当前配置
+        function requestCurrentConfig() {
+            ipcRenderer.send('get-current-config');
+        }
+
         // 自动调整输入框高度
         messageInput.addEventListener('input', function() {
             this.style.height = '44px';
@@ -1216,7 +229,7 @@
             }
         });
 
-        // 全局键盘事件监听 - 空格键聚焦到输入框
+        // 键盘快捷键支持
         document.addEventListener('keydown', function(e) {
             // 检查是否按下空格键
             if (e.key === ' ' || e.code === 'Space') {
@@ -1256,8 +269,8 @@
                 addMessage(response, 'bot');
             } catch (error) {
                 hideTypingIndicator();
-                addMessage('抱歉，出现了错误。请稍后再试。', 'bot');
-                showError('连接错误: ' + error.message);
+                addMessage('抱歉，出现了错误。请检查网络连接或稍后再试。', 'bot');
+                showError('连接错误: ' + error.message + ' - 请尝试刷新页面');
                 console.error('聊天错误:', error);
             } finally {
                 setWaitingState(false);
@@ -1364,17 +377,31 @@
         function showError(message) {
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
-            errorDiv.textContent = message;
+            
+            // 添加错误图标和消息
+            const errorContent = document.createElement('div');
+            errorContent.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <span style="font-size: 1.2em;">⚠️</span>
+                    <span>${message}</span>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                        ✕ 关闭
+                    </button>
+                </div>
+            `;
+            errorDiv.appendChild(errorContent);
             
             const container = document.querySelector('.chat-container');
             container.insertBefore(errorDiv, chatMessages);
             
-            // 3秒后自动移除错误消息
+            // 5秒后自动移除错误消息
             setTimeout(() => {
                 if (errorDiv.parentNode) {
                     errorDiv.parentNode.removeChild(errorDiv);
                 }
-            }, 3000);
+            }, 5000);
         }
 
         // 滚动到底部
@@ -1469,7 +496,13 @@
         // 错误处理
         window.addEventListener('error', function(e) {
             console.error('页面错误:', e.error);
-            showError('页面出现错误，请刷新重试');
+            showError('页面出现错误: ' + (e.error?.message || '未知错误'));
+        });
+
+        // 未处理的Promise拒绝
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('未处理的Promise错误:', e.reason);
+            showError('异步操作错误: ' + (e.reason?.message || '未知错误'));
         });
 
         // 页面卸载时的清理
@@ -1478,509 +511,57 @@
             ipcRenderer.removeAllListeners('chatbot-response');
         });
 
-        // 配置面板相关功能
-        function openConfigModal() {
-            document.getElementById('configModal').style.display = 'block';
-            loadConfig();
-            loadConfigFilePath();
-        }
+        // 新的 MCP Vue 面板函数
+        let mcpVueApp = null;
 
-        function closeConfigModal() {
-            document.getElementById('configModal').style.display = 'none';
-        }
-
-        function loadConfig() {
-            // 从后端获取保存的配置
-            ipcRenderer.send('get-current-config');
-        }
-
-        function loadConfigFilePath() {
-            // 获取配置文件路径
-            ipcRenderer.send('get-config-file-path');
-        }
-
-        function saveConfig() {
-            const baseUrl = document.getElementById('baseUrl').value.trim();
-            const apiKey = document.getElementById('apiKey').value.trim();
-            const modelId = document.getElementById('modelId').value.trim();
+        function openMcpPanel() {
+            const modal = document.getElementById('mcpVueModal');
+            modal.style.display = 'block';
             
-            // 基本验证
-            if (!baseUrl && !apiKey && !modelId) {
-                showError('请至少填写一项配置信息');
-                return;
-            }
-            
-            if (baseUrl && !isValidUrl(baseUrl)) {
-                showError('请输入有效的Base URL格式');
-                return;
-            }
-            
-            // 通知主进程更新配置
-            ipcRenderer.send('update-llm-config', {
-                baseUrl: baseUrl,
-                apiKey: apiKey,
-                modelId: modelId
-            });
-            
-            // 更新当前模型ID
-            currentModelId = modelId;
-            
-            // 显示成功消息
-            showConfigSuccess();
-            
-            // 关闭模态框
-            closeConfigModal();
-            
-            // 更新聊天状态
-            updateChatStatus('配置已更新');
-            setTimeout(() => {
-                updateChatStatusWithModel();
-            }, 2000);
-        }
-
-        function isValidUrl(string) {
-            try {
-                new URL(string);
-                return true;
-            } catch (_) {
-                return false;
+            // 如果Vue应用还没有创建，则创建它
+            if (!mcpVueApp) {
+                const { createApp } = Vue;
+                mcpVueApp = createApp(MCPPanel);
+                mcpVueApp.mount('#mcpVueContent');
             }
         }
 
-        function showConfigSuccess() {
-            const successDiv = document.createElement('div');
-            successDiv.className = 'error-message';
-            successDiv.style.background = '#28a745';
-            successDiv.textContent = '✅ 配置保存成功！';
-            
-            const container = document.querySelector('.chat-container');
-            container.insertBefore(successDiv, chatMessages);
-            
-            // 3秒后自动移除成功消息
-            setTimeout(() => {
-                if (successDiv.parentNode) {
-                    successDiv.parentNode.removeChild(successDiv);
-                }
-            }, 3000);
+        function closeMcpPanel() {
+            document.getElementById('mcpVueModal').style.display = 'none';
         }
 
-        // 测试连接功能
-        function testConnection() {
-            const baseUrl = document.getElementById('baseUrl').value.trim();
-            const apiKey = document.getElementById('apiKey').value.trim();
-            const modelId = document.getElementById('modelId').value.trim();
-            
-            // 基本验证
-            if (!baseUrl && !apiKey && !modelId) {
-                showError('请至少填写一项配置信息进行测试');
-                return;
-            }
-            
-            if (baseUrl && !isValidUrl(baseUrl)) {
-                showError('请输入有效的Base URL格式');
-                return;
-            }
-            
-            if (!apiKey) {
-                showError('API Key是必填项，请填写后再测试');
-                return;
-            }
-            
-            if (!modelId) {
-                showError('模型ID是必填项，请填写后再测试');
-                return;
-            }
-            
-            // 设置按钮为测试状态
-            const testButton = document.getElementById('testButton');
-            testButton.disabled = true;
-            testButton.innerHTML = '🔄 测试中...';
-            
-            // 发送测试请求到主进程
-            ipcRenderer.send('test-model-connection', {
-                baseUrl: baseUrl,
-                apiKey: apiKey,
-                modelId: modelId
-            });
-        }
+        // LLM Vue 面板函数
+        let llmVueApp = null;
 
-        // 获取可用模型列表
-        function fetchAvailableModels() {
-            const baseUrl = document.getElementById('baseUrl').value.trim();
-            const apiKey = document.getElementById('apiKey').value.trim();
+        function openLLMPanel() {
+            const modal = document.getElementById('llmVueModal');
+            modal.style.display = 'block';
             
-            // 基本验证
-            if (!baseUrl) {
-                showError('请先填写Base URL才能获取模型列表');
-                return;
-            }
-            
-            if (!isValidUrl(baseUrl)) {
-                showError('请输入有效的Base URL格式');
-                return;
-            }
-            
-            if (!apiKey) {
-                showError('请先填写API Key才能获取模型列表');
-                return;
-            }
-            
-            // 设置按钮为加载状态
-            const modelsButton = document.getElementById('modelsButton');
-            modelsButton.disabled = true;
-            modelsButton.innerHTML = '⏳';
-            
-            // 显示加载状态
-            showModelsLoading();
-            
-            // 发送获取模型列表请求到主进程
-            ipcRenderer.send('get-available-models', {
-                baseUrl: baseUrl,
-                apiKey: apiKey
-            });
-        }
-
-        // 显示模型列表加载状态
-        function showModelsLoading() {
-            const modelsList = document.getElementById('modelsList');
-            modelsList.style.display = 'block';
-            modelsList.innerHTML = '<div class="models-loading">正在获取模型列表...</div>';
-        }
-
-        // 显示模型列表
-        function showModelsList(models, filterText = '') {
-            const modelsList = document.getElementById('modelsList');
-            
-            if (!models || models.length === 0) {
-                modelsList.innerHTML = '<div class="models-error">未找到可用的模型</div>';
-                return;
-            }
-            
-            // 存储所有模型数据
-            allModels = models;
-            
-            // 应用过滤
-            const filteredModels = filterText ? 
-                models.filter(model => {
-                    const modelId = (model.id || '').toLowerCase();
-                    const modelName = (model.name || model.owned_by || '').toLowerCase();
-                    const searchText = filterText.toLowerCase();
-                    return modelId.includes(searchText) || modelName.includes(searchText);
-                }) : models;
-            
-            if (filteredModels.length === 0) {
-                modelsList.innerHTML = `<div class="models-error">没有找到匹配 "${filterText}" 的模型</div>`;
-                modelsList.style.display = 'block';
-                return;
-            }
-            
-            // 构建模型列表HTML
-            let html = '';
-            filteredModels.forEach(model => {
-                const modelId = model.id || '';
-                const modelName = model.name || model.owned_by || '';
-                
-                // 高亮匹配的文本
-                let highlightedId = modelId;
-                let highlightedName = modelName;
-                
-                if (filterText) {
-                    const regex = new RegExp(`(${filterText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-                    highlightedId = modelId.replace(regex, '<mark>$1</mark>');
-                    highlightedName = modelName.replace(regex, '<mark>$1</mark>');
-                }
-                
-                html += `
-                    <div class="model-item" onclick="selectModel('${modelId}')">
-                        <div class="model-item-id">${highlightedId}</div>
-                        ${modelName ? `<div class="model-item-name">${highlightedName}</div>` : ''}
-                    </div>
-                `;
-            });
-            
-            modelsList.innerHTML = html;
-            modelsList.style.display = 'block';
-        }
-
-        // 过滤模型列表
-        function filterModels() {
-            const filterText = document.getElementById('modelId').value;
-            const modelsList = document.getElementById('modelsList');
-            
-            // 重置选中索引
-            selectedModelIndex = -1;
-            
-            // 如果没有模型数据，不进行过滤
-            if (allModels.length === 0) {
-                return;
-            }
-            
-            // 如果列表是隐藏的，显示它
-            if (modelsList.style.display === 'none') {
-                modelsList.style.display = 'block';
-            }
-            
-            // 应用过滤
-            showModelsList(allModels, filterText);
-        }
-
-        // 更新模型选择高亮
-        function updateModelSelection(modelItems) {
-            // 移除所有高亮
-            modelItems.forEach((item, index) => {
-                item.classList.remove('model-item-selected');
-                if (index === selectedModelIndex) {
-                    item.classList.add('model-item-selected');
-                    // 滚动到可见区域
-                    item.scrollIntoView({ block: 'nearest' });
-                }
-            });
-        }
-
-        // 如果有可用模型则显示列表
-        function showModelsIfAvailable() {
-            const modelsList = document.getElementById('modelsList');
-            if (allModels.length > 0) {
-                const filterText = document.getElementById('modelId').value;
-                showModelsList(allModels, filterText);
+            // 如果Vue应用还没有创建，则创建它
+            if (!llmVueApp) {
+                const { createApp } = Vue;
+                llmVueApp = createApp(LLMPanel);
+                llmVueApp.component('Toast', Toast);
+                llmVueApp.mount('#llmVueContent');
             }
         }
 
-        // 显示模型列表错误
-        function showModelsError(error) {
-            const modelsList = document.getElementById('modelsList');
-            modelsList.innerHTML = `<div class="models-error">获取模型列表失败: ${error}</div>`;
-            modelsList.style.display = 'block';
+        function closeLLMPanel() {
+            document.getElementById('llmVueModal').style.display = 'none';
         }
 
-        // 选择模型
-        function selectModel(modelId) {
-            document.getElementById('modelId').value = modelId;
-            document.getElementById('modelsList').style.display = 'none';
-            
-            // 可选：聚焦到下一个输入字段或保持在当前字段
-            document.getElementById('modelId').focus();
-        }
-
-        // 点击其他地方时隐藏模型列表
-        document.addEventListener('click', function(event) {
-            const modelsList = document.getElementById('modelsList');
-            const modelsButton = document.getElementById('modelsButton');
-            const modelIdInput = document.getElementById('modelId');
-            
-            if (!modelsList.contains(event.target) && 
-                event.target !== modelsButton && 
-                event.target !== modelIdInput) {
-                modelsList.style.display = 'none';
-                selectedModelIndex = -1;
-            }
-        });
-
-        // 显示测试成功消息
-        function showTestSuccess(response) {
-            const successDiv = document.createElement('div');
-            successDiv.className = 'error-message';
-            successDiv.style.background = '#28a745';
-            successDiv.innerHTML = `
-                <div>✅ 连接测试成功！</div>
-                <div style="font-size: 0.8em; margin-top: 5px;">
-                    模型: ${response.model}<br>
-                    服务器: ${response.baseURL}<br>
-                    响应: ${response.response}
-                </div>
-            `;
-            
-            const container = document.querySelector('.chat-container');
-            container.insertBefore(successDiv, chatMessages);
-            
-            // 5秒后自动移除成功消息
-            setTimeout(() => {
-                if (successDiv.parentNode) {
-                    successDiv.parentNode.removeChild(successDiv);
-                }
-            }, 5000);
-        }
-
-        // 显示测试失败消息
-        function showTestError(error) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.innerHTML = `
-                <div>❌ 连接测试失败</div>
-                <div style="font-size: 0.8em; margin-top: 5px;">
-                    错误: ${error}
-                </div>
-            `;
-            
-            const container = document.querySelector('.chat-container');
-            container.insertBefore(errorDiv, chatMessages);
-            
-            // 5秒后自动移除错误消息
-            setTimeout(() => {
-                if (errorDiv.parentNode) {
-                    errorDiv.parentNode.removeChild(errorDiv);
-                }
-            }, 5000);
-        }
-
-        // 切换密码可见性
-        function togglePasswordVisibility() {
-            const apiKeyInput = document.getElementById('apiKey');
-            const toggleButton = document.getElementById('passwordToggle');
-            
-            if (apiKeyInput.type === 'password') {
-                apiKeyInput.type = 'text';
-                toggleButton.textContent = '🙈';
-                toggleButton.title = '隐藏密码';
-                toggleButton.setAttribute('aria-label', '隐藏密码');
-            } else {
-                apiKeyInput.type = 'password';
-                toggleButton.textContent = '👁️';
-                toggleButton.title = '显示密码';
-                toggleButton.setAttribute('aria-label', '显示密码');
-            }
-        }
+        // 将closeLLMPanel函数暴露到全局作用域，供Vue组件调用
+        window.closeLLMPanel = closeLLMPanel;
 
         // 点击模态框背景关闭
         document.addEventListener('click', function(e) {
-            const modal = document.getElementById('configModal');
-            if (e.target === modal) {
-                closeConfigModal();
-            }
-        });
-
-        // ESC键关闭模态框
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                const modal = document.getElementById('configModal');
-                const mcpModal = document.getElementById('mcpModal');
-                if (modal.style.display === 'block') {
-                    closeConfigModal();
-                } else if (mcpModal.style.display === 'block') {
-                    closeMcpModal();
-                }
-            }
-        });
-
-        // MCP配置相关函数
-        function openMcpModal() {
-            document.getElementById('mcpModal').style.display = 'block';
-            loadMcpConfig();
-        }
-
-        function closeMcpModal() {
-            document.getElementById('mcpModal').style.display = 'none';
-        }
-
-        function loadMcpConfig() {
-            // 从主进程获取MCP配置
-            ipcRenderer.send('get-mcp-config');
-        }
-
-        function reloadMcpConfig() {
-            const editor = document.getElementById('mcpJsonEditor');
-            editor.value = '正在重新加载...';
-            loadMcpConfig();
-        }
-
-        function validateMcpJson() {
-            const editor = document.getElementById('mcpJsonEditor');
-            const status = document.getElementById('jsonStatus');
-            const content = editor.value.trim();
+            const mcpVueModal = document.getElementById('mcpVueModal');
+            const llmVueModal = document.getElementById('llmVueModal');
             
-            if (!content) {
-                status.style.display = 'none';
-                return true;
-            }
-            
-            try {
-                JSON.parse(content);
-                status.textContent = '✅ JSON格式正确';
-                status.className = 'json-status valid';
-                status.style.display = 'block';
-                return true;
-            } catch (error) {
-                status.textContent = '❌ JSON格式错误: ' + error.message;
-                status.className = 'json-status invalid';
-                status.style.display = 'block';
-                return false;
-            }
-        }
-
-        function formatMcpJson() {
-            const editor = document.getElementById('mcpJsonEditor');
-            const content = editor.value.trim();
-            
-            if (!content) {
-                showError('没有内容可以格式化');
-                return;
-            }
-            
-            try {
-                const parsed = JSON.parse(content);
-                editor.value = JSON.stringify(parsed, null, 2);
-                validateMcpJson();
-            } catch (error) {
-                showError('JSON格式错误，无法格式化: ' + error.message);
-            }
-        }
-
-        function saveMcpConfig() {
-            const editor = document.getElementById('mcpJsonEditor');
-            const content = editor.value.trim();
-            
-            if (!content) {
-                showError('配置内容不能为空');
-                return;
-            }
-            
-            if (!validateMcpJson()) {
-                showError('请先修正JSON格式错误');
-                return;
-            }
-            
-            try {
-                const config = JSON.parse(content);
-                // 发送到主进程保存
-                ipcRenderer.send('save-mcp-config', config);
-            } catch (error) {
-                showError('JSON解析失败: ' + error.message);
-            }
-        }
-
-        function showMcpSuccess(message) {
-            const successDiv = document.createElement('div');
-            successDiv.className = 'error-message';
-            successDiv.style.background = '#28a745';
-            successDiv.textContent = message;
-            
-            const container = document.querySelector('.chat-container');
-            container.insertBefore(successDiv, chatMessages);
-            
-            // 3秒后自动移除成功消息
-            setTimeout(() => {
-                if (successDiv.parentNode) {
-                    successDiv.parentNode.removeChild(successDiv);
-                }
-            }, 3000);
-        }
-
-        // 监听JSON编辑器输入事件进行实时验证
-        document.addEventListener('DOMContentLoaded', function() {
-            const mcpEditor = document.getElementById('mcpJsonEditor');
-            if (mcpEditor) {
-                mcpEditor.addEventListener('input', validateMcpJson);
-            }
-        });
-
-        // 点击MCP模态框背景关闭
-        document.addEventListener('click', function(e) {
-            const modal = document.getElementById('configModal');
-            const mcpModal = document.getElementById('mcpModal');
-            if (e.target === modal) {
-                closeConfigModal();
-            } else if (e.target === mcpModal) {
-                closeMcpModal();
+            if (e.target === mcpVueModal) {
+                closeMcpPanel();
+            } else if (e.target === llmVueModal) {
+                closeLLMPanel();
             }
         });
 

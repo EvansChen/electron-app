@@ -1,6 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import { app } from 'electron';
+import { MCPServerSSE } from '@openai/agents';
+
+let mcpservers = [];
+
 
 // 获取 MCP 服务器配置文件路径
 function getMcpConfigFilePath() {
@@ -27,20 +31,11 @@ function loadMcpConfig() {
             return JSON.parse(configContent);
         } else {
             console.log('MCP配置文件不存在，使用默认配置');
+            // 返回空配置
+            // 返回默认配置
             // 返回默认配置
             const defaultConfig = {
-                "mcpServers": {
-                    "WebParser": {
-                        "type": "sse",
-                        "description": "网页解析（WebParser）MCP 服务，一个专用于网页内容解析的工具包。",
-                        "isActive": true,
-                        "name": "阿里云百炼_网页解析",
-                        "baseUrl": "https://dashscope.aliyuncs.com/api/v1/mcps/WebParser/sse",
-                        "headers": {
-                            "Authorization": "Bearer sk-586c49520ce94f199c7f0f60ffa2befa"
-                        }
-                    }
-                }
+                "mcpServers": {}
             };
             // 创建默认配置文件
             saveMcpConfig(defaultConfig);
@@ -49,21 +44,8 @@ function loadMcpConfig() {
     } catch (error) {
         console.error('加载MCP配置失败:', error);
         console.error('配置文件路径:', getMcpConfigFilePath());
-        // 返回默认配置
-        return {
-            "mcpServers": {
-                "WebParser": {
-                    "type": "sse",
-                    "description": "网页解析（WebParser）MCP 服务，一个专用于网页内容解析的工具包。",
-                    "isActive": true,
-                    "name": "阿里云百炼_网页解析",
-                    "baseUrl": "https://dashscope.aliyuncs.com/api/v1/mcps/WebParser/sse",
-                    "headers": {
-                        "Authorization": "Bearer sk-586c49520ce94f199c7f0f60ffa2befa"
-                    }
-                }
-            }
-        };
+        // 返回空配置
+        return {"mcpServers": {}};
     }
 }
 
@@ -98,11 +80,104 @@ function updateMcpConfig(newConfig) {
     return saveMcpConfig(newConfig);
 }
 
+// 初始化 MCP 服务器
+async function initializeMcpServers() {
+    try {
+        console.log('开始初始化MCP服务器...');
+        
+        // 从配置文件加载配置
+        const config = loadMcpConfig();
+        
+        if (!config || !config.mcpServers) {
+            console.log('没有找到MCP服务器配置');
+            return [];
+        }
+
+        const servers = [];
+        
+        // 遍历配置中的每个服务器
+        for (const [serverId, serverConfig] of Object.entries(config.mcpServers)) {
+            if (!serverConfig.isActive) {
+                console.log(`跳过未激活的服务器: ${serverId}`);
+                continue;
+            }
+
+            try {
+                console.log(`初始化服务器: ${serverConfig.name || serverId}`);
+                
+                const mcp = new MCPServerSSE({
+                    url: serverConfig.baseUrl,
+                    name: serverConfig.name || serverId,
+                    headers: serverConfig.headers || {},
+                    // 可选：减少每次 list_tools 开销
+                    cacheToolsList: true,
+                });
+
+                // 连接服务器
+                await mcp.connect();
+                console.log(`成功连接到服务器: ${serverConfig.name || serverId}`);
+
+                // 获取工具列表
+                const tools = await mcp.listTools();
+                console.log(`服务器 ${serverConfig.name || serverId} 的工具:`, tools);
+
+                servers.push({
+                    id: serverId,
+                    config: serverConfig,
+                    server: mcp,
+                    tools: tools
+                });
+
+            } catch (error) {
+                console.error(`初始化服务器 ${serverId} 失败:`, error);
+            }
+        }
+
+        mcpservers = servers;
+        console.log(`成功初始化 ${servers.length} 个MCP服务器`);
+        return servers;
+
+    } catch (error) {
+        console.error('初始化MCP服务器失败:', error);
+        return [];
+    }
+}
+
+// 关闭所有 MCP 服务器连接
+async function closeMcpServers() {
+    try {
+        console.log('开始关闭MCP服务器连接...');
+        
+        for (const serverInfo of mcpservers) {
+            try {
+                await serverInfo.server.close();
+                console.log(`已关闭服务器: ${serverInfo.config.name || serverInfo.id}`);
+            } catch (error) {
+                console.error(`关闭服务器 ${serverInfo.id} 失败:`, error);
+            }
+        }
+        
+        mcpservers = [];
+        console.log('所有MCP服务器连接已关闭');
+        
+    } catch (error) {
+        console.error('关闭MCP服务器连接失败:', error);
+    }
+}
+
+// 获取所有已连接的 MCP 服务器
+function getConnectedMcpServers() {
+    return mcpservers;
+}
+
 // 导出函数
 export { 
     loadMcpConfig, 
     saveMcpConfig, 
     getCurrentMcpConfig, 
     updateMcpConfig, 
-    getMcpConfigFilePath 
+    getMcpConfigFilePath,
+    initializeMcpServers,
+    closeMcpServers,
+    getConnectedMcpServers
 };

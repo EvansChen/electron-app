@@ -1,0 +1,395 @@
+/* LLM Panel CSS Styles */
+
+.llm-panel-container {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.llm-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9em;
+}
+
+.required {
+    color: #e74c3c;
+}
+
+.form-input {
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--container-bg);
+    color: var(--text-primary);
+    font-size: 0.9em;
+    transition: border-color 0.3s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.password-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-field .form-input {
+    flex: 1;
+    width: 100%;
+    padding-right: 90px; /* 为粘贴按钮和显示/隐藏按钮留出空间 */
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.password-toggle:hover {
+    background-color: var(--border-color);
+}
+
+/* 新增：为带粘贴按钮的输入框容器样式 */
+.input-with-paste {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.input-with-paste .form-input {
+    flex: 1;
+    width: 100%;
+    padding-right: 50px; /* 为粘贴按钮留出空间 */
+}
+
+.paste-button {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1em;
+    padding: 6px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    color: var(--text-secondary);
+    z-index: 1;
+}
+
+.paste-button:hover {
+    background-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* 为API Key字段的粘贴按钮调整位置（避免与显示/隐藏按钮重叠） */
+.password-field .paste-button {
+    right: 50px;
+}
+
+.model-input-group {
+    display: flex;
+    gap: 8px;
+    position: relative;
+}
+
+.model-input-group .form-input {
+    flex: 1;
+}
+
+.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-models {
+    background: var(--border-color);
+    color: var(--text-primary);
+    min-width: 44px;
+    padding: 10px;
+}
+
+.btn-models:hover:not(:disabled) {
+    background: var(--scrollbar-thumb);
+}
+
+.btn-secondary {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: var(--scrollbar-thumb);
+}
+
+.btn-test {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-test:hover:not(:disabled) {
+    background: #138496;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #5a6fd8;
+}
+
+.form-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.models-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--container-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 2px;
+}
+
+.model-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s ease;
+}
+
+.model-item:hover {
+    background: var(--messages-bg);
+}
+
+.model-item:last-child {
+    border-bottom: none;
+}
+
+.model-item-info {
+    padding: 10px 12px;
+    font-style: italic;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.provider-group {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.provider-group:last-child {
+    border-bottom: none;
+}
+
+.provider-header {
+    padding: 12px;
+    cursor: pointer;
+    background: var(--messages-bg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.provider-header:hover {
+    background: var(--scrollbar-thumb);
+}
+
+.provider-toggle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    min-width: 16px;
+}
+
+.provider-name {
+    flex: 1;
+    color: var(--text-primary);
+}
+
+.provider-count {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    font-weight: normal;
+}
+
+.provider-models {
+    background: var(--container-bg);
+}
+
+.model-item-nested {
+    padding: 8px 12px 8px 36px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.model-item-nested:last-child {
+    border-bottom: none;
+}
+
+.model-name {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.config-note {
+    background: var(--messages-bg);
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.config-path-info {
+    margin-top: 8px;
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    font-family: 'Courier New', monospace;
+}
+
+.test-result {
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 16px;
+}
+
+.test-result.success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.test-result.error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .test-result.success {
+    background: #1b4332;
+    border-color: #2d5a3d;
+    color: #a7f3d0;
+}
+
+[data-theme="dark"] .test-result.error {
+    background: #7f1d1d;
+    border-color: #991b1b;
+    color: #fca5a5;
+}
+
+/* Toast styles */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 6px;
+    color: white;
+    font-weight: 500;
+    z-index: 10000;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 300px;
+}
+
+.toast-info {
+    background: #17a2b8;
+}
+
+.toast-success {
+    background: #28a745;
+}
+
+.toast-warning {
+    background: #ffc107;
+    color: #212529;
+}
+
+.toast-error {
+    background: #dc3545;
+}
+
+.toast-enter-active, .toast-leave-active {
+    transition: all 0.3s ease;
+}
+
+.toast-enter-from {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+.toast-leave-to {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+/* Scrollbar styles for models list */
+.models-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.models-list::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 3px;
+}
+
+.models-list::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
+}
+
+.models-list::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+}
