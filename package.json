@@ -30,9 +30,13 @@
   "author": "Gu Rong",
   "license": "MIT",
   "devDependencies": {
+    "cross-env": "^10.0.0",
     "electron": "^37.2.6",
     "electron-builder": "^26.0.12",
-    "electron-packager": "^17.1.2"
+    "electron-packager": "^17.1.2",
+    "eslint": "^9.33.0",
+    "jest": "^30.0.5",
+    "rimraf": "^6.0.1"
   },
   "dependencies": {
     "@openai/agents": "^0.0.16",
@@ -45,20 +49,21 @@
   "build": {
     "appId": "com.gurong.electron-app",
     "productName": "chatbot",
-    "icon": "icon.ico",
+    "icon": "backend/icon.ico",
     "directories": {
       "output": "dist"
     },
     "files": [
-      "main.js",
-      "chatbot.js",
-      "index.html",
-      "icon.ico",
+      "backend/**/*",
+      "frontend/**/*",
+      "config/**/*",
       "node_modules/**/*",
+      "package.json",
+      "!.env",
       "!llm-config.json"
     ],
     "win": {
-      "icon": "icon.ico",
+      "icon": "backend/icon.ico",
       "target": {
         "target": "portable",
         "arch": [
