@@ -251,27 +251,80 @@ ipcMain.on('close-mcp-servers', async (event) => {
 // IPC 通信处理 - 连接单个MCP服务器
 ipcMain.on('connect-mcp-server', async (event, serverConfig) => {
   try {
-    // 这里可以调用单个服务器连接的逻辑
-    // 暂时返回模拟结果
+    console.log('尝试连接MCP服务器:', serverConfig.name || serverConfig.id);
+    
+    // 检查必要的配置
+    if (!serverConfig.baseUrl) {
+      throw new Error('服务器配置缺少baseUrl');
+    }
+    
+    // 动态导入MCPServerSSE
+    const { MCPServerSSE } = await import('@openai/agents');
+    
+    // 创建MCP服务器实例
+    const mcp = new MCPServerSSE({
+      url: serverConfig.baseUrl,
+      name: serverConfig.name || serverConfig.id,
+      headers: serverConfig.headers || {},
+      cacheToolsList: true,
+    });
+
+    // 连接服务器
+    await mcp.connect();
+    console.log(`成功连接到服务器: ${serverConfig.name || serverConfig.id}`);
+
+    // 获取工具列表
+    const tools = await mcp.listTools();
+    console.log(`服务器 ${serverConfig.name || serverConfig.id} 的工具:`, tools);
+
     const result = {
       success: true,
-      tools: [
-        { name: 'parse_url', description: '解析网页URL内容' },
-        { name: 'search_web', description: '搜索互联网内容' }
-      ]
+      tools: tools || []
     };
+    
     event.reply('connect-mcp-server-response', result);
   } catch (error) {
-    console.error('连接MCP服务器错误:', error);
-    event.reply('connect-mcp-server-response', { success: false, error: error.message });
+    console.error('连接MCP服务器错误:', {
+      serverName: serverConfig.name || serverConfig.id,
+      baseUrl: serverConfig.baseUrl,
+      error: error.message,
+      stack: error.stack
+    });
+    
+    // 提供更详细的错误信息
+    let errorMessage = error.message;
+    if (error.code === 'ENOTFOUND') {
+      errorMessage = '无法解析服务器地址，请检查URL是否正确';
+    } else if (error.code === 'ECONNREFUSED') {
+      errorMessage = '连接被拒绝，请检查服务器是否启动';
+    } else if (error.code === 'ETIMEDOUT') {
+      errorMessage = '连接超时，请检查网络连接';
+    } else if (error.code === 401 || error.message.includes('401')) {
+      errorMessage = '身份验证失败，请检查API密钥是否正确';
+    } else if (error.code === 403 || error.message.includes('403')) {
+      errorMessage = '访问被拒绝，请检查API权限设置';
+    } else if (error.code === 404 || error.message.includes('404')) {
+      errorMessage = '服务器端点不存在，请检查URL路径';
+    } else if (error.message.includes('Non-200 status code')) {
+      const statusMatch = error.message.match(/\((\d+)\)/);
+      const statusCode = statusMatch ? statusMatch[1] : 'unknown';
+      errorMessage = `服务器返回错误状态码 ${statusCode}，请检查服务器配置和API密钥`;
+    }
+    
+    event.reply('connect-mcp-server-response', { success: false, error: errorMessage });
   }
 });
 
 // IPC 通信处理 - 断开MCP服务器连接
 ipcMain.on('disconnect-mcp-server', async (event, serverId) => {
   try {
+    console.log('尝试断开MCP服务器连接:', serverId);
+    
     // 这里可以调用断开服务器连接的逻辑
+    // 目前只是返回成功，实际应用中可能需要维护连接状态
+    
     event.reply('disconnect-mcp-server-response', { success: true });
+    console.log('服务器断开连接成功:', serverId);
   } catch (error) {
     console.error('断开MCP服务器错误:', error);
     event.reply('disconnect-mcp-server-response', { success: false, error: error.message });

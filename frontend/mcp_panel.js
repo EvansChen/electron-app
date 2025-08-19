@@ -62,7 +62,18 @@ const electronAPI = {
                 }
             });
             
-            ipcRenderer.send('connect-mcp-server', server);
+            // 清理服务器对象，只发送必要的配置数据
+            const cleanServer = {
+                id: server.id,
+                name: server.name,
+                description: server.description,
+                type: server.type,
+                baseUrl: server.baseUrl,
+                isActive: server.isActive,
+                headers: server.headers ? { ...server.headers } : {}
+            };
+            
+            ipcRenderer.send('connect-mcp-server', cleanServer);
         });
     },
     
@@ -253,28 +264,62 @@ const MCPPanel = {
                 return;
             }
             
-            console.log('尝试连接服务器:', server.name || server.id);
+            console.log('尝试连接服务器:', {
+                name: server.name || server.id,
+                id: server.id,
+                baseUrl: server.baseUrl,
+                type: server.type
+            });
             
             try {
                 isLoading.value = true;
+                server.connecting = true; // 添加连接中状态
+                
                 const result = await window.electronAPI.connectMcpServer(server);
+                console.log('连接结果:', result);
+                
                 if (result.success) {
-                    server.tools = result.tools;
+                    server.tools = result.tools || [];
                     server.connected = true;
-                    showNotification(`连接到 ${server.name} 成功`, 'success');
+                    server.lastConnected = new Date().toISOString();
+                    console.log(`连接成功，获取到 ${server.tools.length} 个工具`);
+                    showNotification(`连接到 ${server.name} 成功，发现 ${server.tools.length} 个工具`, 'success');
                 } else {
-                    throw new Error(result.error);
+                    throw new Error(result.error || '连接失败');
                 }
             } catch (error) {
                 console.error('连接服务器失败:', {
                     serverName: server.name || server.id,
+                    baseUrl: server.baseUrl,
+                    serverType: server.type,
                     error: error.message,
                     stack: error.stack
                 });
+                
                 server.connected = false;
-                showNotification('连接失败: ' + error.message, 'error');
+                server.tools = []; // 清空工具列表
+                server.lastError = error.message;
+                
+                // 提供更友好的错误提示
+                let userMessage = '连接失败: ' + error.message;
+                if (error.message.includes('401') || error.message.includes('身份验证')) {
+                    userMessage += '\n建议检查API密钥是否正确或是否已过期';
+                } else if (error.message.includes('403') || error.message.includes('权限')) {
+                    userMessage += '\n请检查API密钥的权限设置';
+                } else if (error.message.includes('404') || error.message.includes('不存在')) {
+                    userMessage += '\n请检查服务器URL路径是否正确';
+                } else if (error.message.includes('超时')) {
+                    userMessage += '\n建议检查网络连接和服务器状态';
+                } else if (error.message.includes('解析')) {
+                    userMessage += '\n请检查服务器URL格式是否正确';
+                } else if (error.message.includes('拒绝')) {
+                    userMessage += '\n请确认服务器已启动并可访问';
+                }
+                
+                showNotification(userMessage, 'error');
             } finally {
                 isLoading.value = false;
+                server.connecting = false;
             }
         };
 
