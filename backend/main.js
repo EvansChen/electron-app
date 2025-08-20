@@ -1,7 +1,9 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { handleChatMessage, clearHistory, updateConfig, testModelConnection, getCurrentConfig, getAvailableModels, getConfigFilePath } from './chatbot.js';
+import { handleChatMessage, clearHistory } from './chatbot.js';
+import { updateConfig, testModelConnection, getCurrentConfig, getAvailableModels, getConfigFilePath } from './config.js';
+
 import { loadMcpConfig, saveMcpConfig, getCurrentMcpConfig, updateMcpConfig, getMcpConfigFilePath, initializeMcpServers, closeMcpServers, getConnectedMcpServers } from './mcpserver.js';
 import { marked } from 'marked';
 
