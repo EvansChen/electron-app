@@ -355,6 +355,15 @@ async function callChatbot(message) {
     // 直接调用 chatbot 模块的 handleChatMessage 函数
     const response = await handleChatMessage(message);
     
+    // 配置 marked 选项
+    marked.setOptions({
+      breaks: true,  // 支持换行
+      gfm: true,     // 支持 GitHub Flavored Markdown
+      sanitize: false,  // 不清理 HTML，允许更好的格式化
+      smartLists: true, // 智能列表处理
+      smartypants: false, // 关闭智能标点符号，避免冲突
+    });
+    
     // 将 markdown 格式的响应转换为 HTML
     const htmlResponse = marked(response);
     

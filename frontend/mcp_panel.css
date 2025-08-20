@@ -1,11 +1,32 @@
 /* MCP Panel 样式 */
+
+/* Color variables for theme support */
+:root {
+    --mcp-bg: #f5f5f5;
+    --mcp-panel-bg: white;
+    --mcp-text-primary: #333;
+    --mcp-text-secondary: #666;
+    --mcp-border: #ddd;
+    --mcp-shadow: rgba(0,0,0,0.1);
+}
+
+[data-theme="dark"] {
+    --mcp-bg: #000000;
+    --mcp-panel-bg: #111111;
+    --mcp-text-primary: #ffffff;
+    --mcp-text-secondary: #cccccc;
+    --mcp-border: #333333;
+    --mcp-shadow: rgba(255,255,255,0.1);
+}
+
 .mcp-panel {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
-    background: #f5f5f5;
+    background: var(--mcp-bg);
     min-height: 100vh;
+    color: var(--mcp-text-primary);
 }
 
 /* 头部样式 */
@@ -15,14 +36,14 @@
     align-items: center;
     margin-bottom: 30px;
     padding: 20px;
-    background: white;
+    background: var(--mcp-panel-bg);
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px var(--mcp-shadow);
 }
 
 .panel-header h2 {
     margin: 0;
-    color: #333;
+    color: var(--mcp-text-primary);
 }
 
 .header-actions {
@@ -108,6 +129,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    color: var(--text-primary);
+    transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+.btn-close:hover {
+    background-color: var(--border-color);
+    color: var(--text-primary);
+    border-radius: 4px;
 }
 
 /* 服务器列表样式 */
@@ -117,7 +146,7 @@
 
 .servers-section h3 {
     margin-bottom: 20px;
-    color: #333;
+    color: var(--mcp-text-primary);
 }
 
 .servers-grid {
@@ -127,10 +156,10 @@
 }
 
 .server-card {
-    background: white;
+    background: var(--mcp-panel-bg);
     border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px var(--mcp-shadow);
     cursor: pointer;
     transition: all 0.2s;
     border: 2px solid transparent;
@@ -158,7 +187,7 @@
 
 .server-header h4 {
     margin: 0;
-    color: #333;
+    color: var(--mcp-text-primary);
     flex: 1;
 }
 
@@ -170,11 +199,11 @@
 .server-info p {
     margin: 8px 0;
     font-size: 14px;
-    color: #666;
+    color: var(--mcp-text-secondary);
 }
 
 .server-info strong {
-    color: #333;
+    color: var(--mcp-text-primary);
 }
 
 /* 状态样式 */

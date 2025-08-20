@@ -54,7 +54,7 @@
             <textarea 
                 class="chat-input" 
                 id="messageInput" 
-                placeholder="输入您的消息..." 
+                placeholder="空格键→输入您的消息." 
                 rows="1"
                 maxlength="5000"
                 style="background: var(--container-bg); color: var(--text-primary); border-color: var(--border-color);"
@@ -320,7 +320,55 @@
                 copyButton.onclick = () => copyMessage(content, copyButton);
                 messageDiv.appendChild(copyButton);
             } else {
-                messageContent.textContent = content;
+                // 对于用户消息，如果字数超过200，显示缩略版本并添加复制按钮
+                if (type === 'user' && content.length > 120) {
+                    const truncatedContent = content.substring(0, 120) + '...';
+                    messageContent.textContent = truncatedContent;
+                    
+                    // 添加复制完整内容的按钮
+                    const copyButton = document.createElement('button');
+                    copyButton.className = 'expand-button'; // 复用样式类名
+                    copyButton.innerHTML = '📋 复制';
+                    copyButton.style.cssText = `
+                        background: var(--primary-color);
+                        color: white;
+                        border: none;
+                        padding: 4px 8px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        cursor: pointer;
+                        margin-left: 8px;
+                        opacity: 0.8;
+                    `;
+                    
+                    copyButton.onclick = () => copyMessage(content, copyButton);
+                    
+                    messageDiv.appendChild(copyButton);
+                } else {
+                    messageContent.textContent = content;
+                    
+                    // 为所有用户消息添加复制按钮
+                    if (type === 'user') {
+                        const copyButton = document.createElement('button');
+                        copyButton.className = 'expand-button'; // 复用样式类名
+                        copyButton.innerHTML = '📋 复制';
+                        copyButton.style.cssText = `
+                            background: var(--primary-color);
+                            color: white;
+                            border: none;
+                            padding: 4px 8px;
+                            border-radius: 4px;
+                            font-size: 12px;
+                            cursor: pointer;
+                            margin-left: 8px;
+                            opacity: 0.8;
+                        `;
+                        
+                        copyButton.onclick = () => copyMessage(content, copyButton);
+                        
+                        messageDiv.appendChild(copyButton);
+                    }
+                }
             }
             
             messageDiv.appendChild(messageContent);

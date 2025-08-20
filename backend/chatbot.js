@@ -2,10 +2,12 @@ import 'dotenv/config';
 import { Agent, run, setDefaultOpenAIClient, setOpenAIAPI, setTracingDisabled } from '@openai/agents';
 
 // 创建OpenAI客户端（仅在配置有效时）
-let agent = null;
+let main_agent = null;
+let report = null;
+
 
 function initializeChatbot(config) {
-    agent = new Agent({
+    main_agent = new Agent({
         model: config.modelId,
         name: 'ChatBot',
         description: 'A helpful AI assistant chatbot',
@@ -17,12 +19,12 @@ function initializeChatbot(config) {
 
 let thread = [];
 
-// 处理聊天消息的函数
+// ------
 async function handleChatMessage(message) {
     try {
         thread = thread.concat({ role: 'user', content: message });
         
-        const result = await run(agent, thread, {
+        const result = await run(main_agent, thread, {
             maxTurns: 15  // Limit the conversation turns
         });
 
@@ -30,32 +32,12 @@ async function handleChatMessage(message) {
         
         return result.finalOutput || result.output || '抱歉，模型现在无法回应。';
     } catch (error) {
-        console.error('聊天机器人错误:', error);
-        console.error('错误详情:', {
-            message: error.message,
-            status: error.status,
-            code: error.code,
-            type: error.type
-        });
-        
-        let userFriendlyError = '聊天机器人处理失败';
-        if (error.message.includes('401')) {
-            userFriendlyError = 'API Key 无效或已过期，请检查配置';
-        } else if (error.message.includes('404')) {
-            userFriendlyError = '模型不存在或 Base URL 错误，请检查配置';
-        } else if (error.message.includes('429')) {
-            userFriendlyError = '请求频率过高，请稍后再试';
-        } else if (error.message.includes('network') || error.message.includes('ENOTFOUND')) {
-            userFriendlyError = '网络连接错误，请检查网络设置';
-        } else {
-            userFriendlyError = `聊天机器人处理失败: ${error.message}`;
-        }
-        
+        let userFriendlyError = `聊天机器人处理失败: ${error.message}`;
         throw new Error(userFriendlyError);
     }
 }
 
-// 清除聊天历史的函数
+// ------
 function clearHistory() {
     thread = [];
 }
