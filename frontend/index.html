@@ -482,17 +482,18 @@
 
         // 清空聊天记录
         function clearChat() {
-            if (confirm('确定要清空聊天记录吗？')) {
-                chatMessages.innerHTML = `
-                    <div class="message system">
-                        👋 您好！我是您的AI助手，有什么可以帮助您的吗？
-                    </div>
-                `;
-                updateChatStatus('就绪');
-                
-                // 同时清除聊天历史
-                ipcRenderer.send('clear-history');
-            }
+            chatMessages.innerHTML = `
+                <div class="message system">
+                    👋 您好！我是您的AI助手，有什么可以帮助您的吗？
+                </div>
+            `;
+            // 重置等待状态，确保输入框可用
+            setWaitingState(false);
+            // 重新聚焦到输入框
+            messageInput.focus();
+            
+            // 同时清除聊天历史
+            ipcRenderer.send('clear-history');
         }
 
         // 错误处理
