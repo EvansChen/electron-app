@@ -112,9 +112,7 @@ body {
 }
 
 .config-button {
-    position: absolute;
-    top: 15px;
-    left: 120px;
+    
     background: rgba(255,255,255,0.2);
     border: 1px solid rgba(255,255,255,0.3);
     color: var(--header-text);
@@ -153,6 +151,11 @@ body {
 .mcp-button:hover {
     background: rgba(255,255,255,0.3);
     transform: scale(1.05);
+}
+
+/* 隐藏 MCP 配置按钮 */
+.mcp-button {
+    display: none !important;
 }
 
 .chat-messages {

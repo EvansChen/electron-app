@@ -18,13 +18,14 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <button class="theme-toggle" onclick="toggleTheme()">
-                <span id="themeIcon">🌙</span>
-                <span id="themeText">暗黑</span>
-            </button>
+            
             <button class="config-button" onclick="openLLMPanel()">
                 <span>🧠</span>
                 <span>模型</span>
+            </button>
+            <button class="theme-toggle" onclick="toggleTheme()" style="display: none;">
+                <span id="themeIcon">🌙</span>
+                <span id="themeText">暗黑</span>
             </button>
             <button class="mcp-button" onclick="openMcpPanel()">
                 <span>🔧</span>
@@ -182,7 +183,7 @@
             updateChatStatusWithModel();
             
             // 加载保存的主题设置
-            const savedTheme = localStorage.getItem('theme') || 'light';
+            const savedTheme = localStorage.getItem('theme') || 'dark';
             setTheme(savedTheme);
             
             // 获取当前配置并更新状态

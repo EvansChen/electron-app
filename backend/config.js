@@ -17,7 +17,7 @@ function getConfigFilePath() {
         return path.join(userDataPath, 'llm-config.json');
     } catch (error) {
         // 如果不在Electron环境中（比如测试时），回退到当前目录
-        console.warn('不在Electron环境中，使用当前目录保存配置:', error.message);
+        console.warn('Not in Electron environment, using current directory to save configuration:', error.message);
         return path.join(__dirname, 'llm-config.json');
     }
 }
@@ -28,22 +28,22 @@ const configFilePath = getConfigFilePath();
 function loadSavedConfig() {
     try {
         const configPath = getConfigFilePath();
-        console.log('尝试加载配置文件:', configPath);
+        console.log('Attempting to load configuration file:', configPath);
         
         if (fs.existsSync(configPath)) {
             const savedConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            console.log('加载保存的配置成功:', {
+            console.log('Loaded saved configuration successfully:', {
                 baseURL: savedConfig.baseURL,
                 modelId: savedConfig.modelId,
                 hasApiKey: !!savedConfig.apiKey
             });
             return savedConfig;
         } else {
-            console.log('配置文件不存在:', configPath);
+            console.log('Configuration file does not exist:', configPath);
         }
     } catch (error) {
-        console.error('加载配置文件失败:', error);
-        console.error('配置文件路径:', getConfigFilePath());
+        console.error('Failed to load configuration file:', error);
+        console.error('Configuration file path:', getConfigFilePath());
     }
     return null;
 }
@@ -57,17 +57,17 @@ function saveConfigToFile(config) {
         // 确保配置目录存在
         if (!fs.existsSync(configDir)) {
             fs.mkdirSync(configDir, { recursive: true });
-            console.log('创建配置目录:', configDir);
+            console.log('Configuration directory created:', configDir);
         }
         
         // 保存配置文件
         fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
-        console.log('配置已保存到文件:', configPath);
+        console.log('Configuration saved to file:', configPath);
         return true;
     } catch (error) {
-        console.error('保存配置文件失败:', error);
-        console.error('配置文件路径:', getConfigFilePath());
-        console.error('错误详情:', {
+        console.error('Failed to save configuration file:', error);
+        console.error('Configuration file path:', getConfigFilePath());
+        console.error('Error details:', {
             code: error.code,
             message: error.message,
             path: error.path
@@ -87,13 +87,13 @@ let currentConfig = {
 const savedConfig = loadSavedConfig();
 if (savedConfig) {
     currentConfig = { ...currentConfig, ...savedConfig };
-    console.log('使用保存的配置:', {
+    console.log('Using saved configuration:', {
         baseURL: currentConfig.baseURL,
         modelId: currentConfig.modelId,
         hasApiKey: !!currentConfig.apiKey
     });
 } else {
-    console.warn('未找到保存的配置，请在界面中配置API设置');
+    console.warn('No saved configuration found, please configure API settings in the interface');
 }
 
 // 验证配置是否完整
@@ -134,23 +134,19 @@ function initializeClient() {
         setDefaultOpenAIClient(client); 
         setTracingDisabled(true);
 
-        initializeChatbot(currentConfig);
+        initializeChatbot(currentConfig)
 
-        console.log('OpenAI 客户端和 Agent 初始化成功');
         return true;
     } else {
-        console.log('配置不完整，跳过客户端初始化:', validation.errors);
+        console.log('Configuration is incomplete, skipping client initialization:', validation.errors);
         return false;
     }
 }
 
-// 尝试初始化客户端
-initializeClient();
-
 // 更新配置的函数
 function updateConfig(newConfig) {
     try {
-        console.log('更新LLM配置:', newConfig);
+        console.log('Updating LLM configuration:', newConfig);
         
         // 更新配置对象
         if (newConfig.baseUrl) {
@@ -172,19 +168,18 @@ function updateConfig(newConfig) {
         
         const saved = saveConfigToFile(configToSave);
         if (!saved) {
-            console.warn('配置保存失败，但仍会应用到当前会话');
+            console.warn('Configuration save failed, but it will still apply to the current session');
         }
         
         // 重新初始化客户端和Agent
         const initialized = initializeClient();
-        if (!initialized) {
-            return { success: false, error: '配置不完整，无法初始化客户端' };
-        }
         
-        console.log('LLM配置更新成功');
-        return { success: true, message: '配置更新成功并已保存' };
+        if (!initialized) {
+            return { success: false, error: 'Configuration is incomplete, unable to initialize client' };
+        }
+
+        return { success: true, message: 'Configuration updated successfully and saved' };
     } catch (error) {
-        console.error('更新配置失败:', error);
         return { success: false, error: error.message };
     }
 };
@@ -201,7 +196,7 @@ function getCurrentConfig() {
 // 测试模型连通性的函数
 async function testModelConnection(config) {
     try {
-        console.log('测试模型连通性:', {
+        console.log('Testing model connectivity:', {
             baseURL: config.baseUrl || currentConfig.baseURL,
             modelId: config.modelId || currentConfig.modelId,
             apiKeyPrefix: (config.apiKey || currentConfig.apiKey) ? 
@@ -329,4 +324,4 @@ async function getAvailableModels(config = null) {
 }
 
 // Export the agent and functions for use in other modules
-export { updateConfig, testModelConnection, getCurrentConfig, getAvailableModels, getConfigFilePath };
+export { updateConfig, testModelConnection, getCurrentConfig, getAvailableModels, getConfigFilePath, initializeClient };

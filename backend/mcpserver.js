@@ -14,7 +14,7 @@ function getMcpConfigFilePath() {
         return path.join(userDataPath, 'mcpserver.json');
     } catch (error) {
         // 如果不在Electron环境中（比如测试时），回退到当前目录
-        console.warn('不在Electron环境中，使用当前目录保存MCP配置:', error.message);
+        console.warn('Not in Electron environment, using current directory to save MCP configuration:', error.message);
         return path.join(path.dirname(new URL(import.meta.url).pathname), 'mcpserver.json');
     }
 }
@@ -23,14 +23,14 @@ function getMcpConfigFilePath() {
 function loadMcpConfig() {
     try {
         const configPath = getMcpConfigFilePath();
-        console.log('尝试加载MCP配置文件:', configPath);
+        console.log('Attempting to load MCP configuration file:', configPath);
         
         if (fs.existsSync(configPath)) {
             const configContent = fs.readFileSync(configPath, 'utf8');
-            console.log('成功加载MCP配置');
+            console.log('Successfully loaded MCP configuration');
             return JSON.parse(configContent);
         } else {
-            console.log('MCP配置文件不存在，使用默认配置');
+            console.log('MCP configuration file does not exist, using default configuration');
             // 返回空配置
             // 返回默认配置
             // 返回默认配置
@@ -42,8 +42,8 @@ function loadMcpConfig() {
             return defaultConfig;
         }
     } catch (error) {
-        console.error('加载MCP配置失败:', error);
-        console.error('配置文件路径:', getMcpConfigFilePath());
+        console.error('Failed to load MCP configuration:', error);
+        console.error('Configuration file path:', getMcpConfigFilePath());
         // 返回空配置
         return {"mcpServers": {}};
     }
@@ -53,7 +53,7 @@ function loadMcpConfig() {
 function saveMcpConfig(config) {
     try {
         const configPath = getMcpConfigFilePath();
-        console.log('保存MCP配置到:', configPath);
+        console.log('Saving MCP configuration to:', configPath);
         
         // 确保目录存在
         const configDir = path.dirname(configPath);
@@ -62,10 +62,10 @@ function saveMcpConfig(config) {
         }
         
         fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
-        console.log('MCP配置保存成功');
+        console.log('MCP configuration saved successfully');
         return { success: true };
     } catch (error) {
-        console.error('保存MCP配置失败:', error);
+        console.error('Failed to save MCP configuration:', error);
         return { success: false, error: error.message };
     }
 }
@@ -83,13 +83,13 @@ function updateMcpConfig(newConfig) {
 // 初始化 MCP 服务器
 async function initializeMcpServers() {
     try {
-        console.log('开始初始化MCP服务器...');
+        console.log('Starting MCP server initialization...');
         
         // 从配置文件加载配置
         const config = loadMcpConfig();
         
         if (!config || !config.mcpServers) {
-            console.log('没有找到MCP服务器配置');
+            console.log('No MCP server configuration found');
             return [];
         }
 
@@ -98,12 +98,12 @@ async function initializeMcpServers() {
         // 遍历配置中的每个服务器
         for (const [serverId, serverConfig] of Object.entries(config.mcpServers)) {
             if (!serverConfig.isActive) {
-                console.log(`跳过未激活的服务器: ${serverId}`);
+                console.log(`Skipping inactive server: ${serverId}`);
                 continue;
             }
 
             try {
-                console.log(`初始化服务器: ${serverConfig.name || serverId}`);
+                console.log(`Initializing server: ${serverConfig.name || serverId}`);
                 
                 const mcp = new MCPServerSSE({
                     url: serverConfig.baseUrl,
@@ -115,11 +115,11 @@ async function initializeMcpServers() {
 
                 // 连接服务器
                 await mcp.connect();
-                console.log(`成功连接到服务器: ${serverConfig.name || serverId}`);
+                console.log(`Successfully connected to server: ${serverConfig.name || serverId}`);
 
                 // 获取工具列表
                 const tools = await mcp.listTools();
-                console.log(`服务器 ${serverConfig.name || serverId} 的工具:`, tools);
+                console.log(`Tools for server ${serverConfig.name || serverId}:`, tools);
 
                 servers.push({
                     id: serverId,
@@ -129,16 +129,16 @@ async function initializeMcpServers() {
                 });
 
             } catch (error) {
-                console.error(`初始化服务器 ${serverId} 失败:`, error);
+                console.error(`Failed to initialize server ${serverId}:`, error);
             }
         }
 
         mcpservers = servers;
-        console.log(`成功初始化 ${servers.length} 个MCP服务器`);
+        console.log(`Successfully initialized ${servers.length} MCP servers`);
         return servers;
 
     } catch (error) {
-        console.error('初始化MCP服务器失败:', error);
+        console.error('Failed to initialize MCP servers:', error);
         return [];
     }
 }
@@ -146,22 +146,22 @@ async function initializeMcpServers() {
 // 关闭所有 MCP 服务器连接
 async function closeMcpServers() {
     try {
-        console.log('开始关闭MCP服务器连接...');
+        console.log('Starting to close MCP server connections...');
         
         for (const serverInfo of mcpservers) {
             try {
                 await serverInfo.server.close();
-                console.log(`已关闭服务器: ${serverInfo.config.name || serverInfo.id}`);
+                console.log(`Closed server: ${serverInfo.config.name || serverInfo.id}`);
             } catch (error) {
-                console.error(`关闭服务器 ${serverInfo.id} 失败:`, error);
+                console.error(`Failed to close server ${serverInfo.id}:`, error);
             }
         }
         
         mcpservers = [];
-        console.log('所有MCP服务器连接已关闭');
+        console.log('All MCP server connections have been closed');
         
     } catch (error) {
-        console.error('关闭MCP服务器连接失败:', error);
+        console.error('Failed to close MCP server connections:', error);
     }
 }
 

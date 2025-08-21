@@ -1,25 +1,38 @@
 import 'dotenv/config';
-import { Agent, run, setDefaultOpenAIClient, setOpenAIAPI, setTracingDisabled } from '@openai/agents';
+import { Agent, run, tool } from '@openai/agents';
+import { z } from 'zod';
+import { chatbot_instructions } from './prompts/instructions.js';
+import { switch_theme } from './main.js';
+// import { getAvailableModels } from './config.js';
+
 
 // 创建OpenAI客户端（仅在配置有效时）
 let main_agent = null;
-let report = null;
 
+const switch_theme_tool = tool({
+  name: 'switch_theme',
+  description: '切换APP主题，暗黑→浅色 或者 浅色→暗黑',
+  parameters: z.object({ }),
+  async execute({ }) {
+    return switch_theme();
+  },
+});
 
 function initializeChatbot(config) {
     main_agent = new Agent({
         model: config.modelId,
         name: 'ChatBot',
         description: 'A helpful AI assistant chatbot',
-        instructions: 'You are a helpful AI assistant. Provide clear and concise answers to user questions in Chinese. Be friendly and helpful.',
+        instructions: chatbot_instructions,
+        tools:[]
     });
     
     return true;
 }
 
-let thread = [];
 
 // ------
+let thread = [];
 async function handleChatMessage(message) {
     try {
         thread = thread.concat({ role: 'user', content: message });
