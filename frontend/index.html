@@ -55,7 +55,7 @@
             <textarea 
                 class="chat-input" 
                 id="messageInput" 
-                placeholder="空格键→输入您的消息." 
+                placeholder="空格键→输入您的消息。 ↑↓键浏览历史记录。" 
                 rows="1"
                 maxlength="5000"
                 style="background: var(--container-bg); color: var(--text-primary); border-color: var(--border-color);"
@@ -176,6 +176,35 @@
         let currentModelId = ''; // 存储当前模型ID
         let allModels = []; // 存储所有模型数据用于过滤
         let selectedModelIndex = -1; // 当前选中的模型索引
+        
+        // 消息历史记录
+        let messageHistory = [];
+        let historyIndex = -1;
+        let currentInputBuffer = '';
+        
+        // 从 localStorage 加载历史记录
+        function loadHistoryFromStorage() {
+            try {
+                const stored = localStorage.getItem('messageHistory');
+                if (stored) {
+                    messageHistory = JSON.parse(stored);
+                    console.log('从本地存储加载历史记录:', messageHistory.length, '条');
+                }
+            } catch (error) {
+                console.error('加载历史记录失败:', error);
+                messageHistory = [];
+            }
+        }
+        
+        // 保存历史记录到 localStorage
+        function saveHistoryToStorage() {
+            try {
+                localStorage.setItem('messageHistory', JSON.stringify(messageHistory));
+                console.log('历史记录已保存到本地存储');
+            } catch (error) {
+                console.error('保存历史记录失败:', error);
+            }
+        }
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -185,6 +214,9 @@
             // 加载保存的主题设置
             const savedTheme = localStorage.getItem('theme') || 'dark';
             setTheme(savedTheme);
+            
+            // 加载消息历史记录
+            loadHistoryFromStorage();
             
             // 获取当前配置并更新状态
             requestCurrentConfig();
@@ -218,19 +250,97 @@
             ipcRenderer.send('get-current-config');
         }
 
-        // 自动调整输入框高度
-        messageInput.addEventListener('input', function() {
+        // 自动调整输入框高度并重置历史记录状态
+        messageInput.addEventListener('input', function(e) {
+            // 调整高度
             this.style.height = '44px';
             this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+            
+            // 如果用户正在手动输入内容，重置历史索引
+            if (historyIndex !== -1) {
+                historyIndex = -1;
+                currentInputBuffer = '';
+            }
         });
 
-        // 监听回车键发送消息
+        // 监听回车键发送消息和方向键历史记录
         messageInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                navigateHistory('up');
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                navigateHistory('down');
             }
         });
+
+        // 历史记录导航函数
+        function navigateHistory(direction) {
+            if (messageHistory.length === 0) {
+                console.log('暂无历史记录');
+                return;
+            }
+            
+            // 如果是第一次使用历史记录，保存当前输入
+            if (historyIndex === -1) {
+                currentInputBuffer = messageInput.value;
+            }
+            
+            if (direction === 'up') {
+                if (historyIndex < messageHistory.length - 1) {
+                    historyIndex++;
+                    messageInput.value = messageHistory[messageHistory.length - 1 - historyIndex];
+                    console.log('历史记录导航 ↑:', historyIndex + 1, '/', messageHistory.length);
+                }
+            } else if (direction === 'down') {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    messageInput.value = messageHistory[messageHistory.length - 1 - historyIndex];
+                    console.log('历史记录导航 ↓:', historyIndex + 1, '/', messageHistory.length);
+                } else if (historyIndex === 0) {
+                    historyIndex = -1;
+                    messageInput.value = currentInputBuffer;
+                    console.log('返回当前输入');
+                }
+            }
+            
+            // 调整输入框高度
+            messageInput.style.height = '44px';
+            messageInput.style.height = Math.min(messageInput.scrollHeight, 100) + 'px';
+            
+            // 将光标移到末尾
+            setTimeout(() => {
+                messageInput.setSelectionRange(messageInput.value.length, messageInput.value.length);
+            }, 0);
+        }
+
+        // 添加消息到历史记录
+        function addToHistory(message) {
+            if (!message || message.trim() === '') return;
+            
+            // 去重：如果最后一条消息相同，则不添加
+            if (messageHistory.length > 0 && messageHistory[messageHistory.length - 1] === message) {
+                return;
+            }
+            
+            messageHistory.push(message);
+            console.log('添加到历史记录:', message, '总数:', messageHistory.length);
+            
+            // 限制历史记录数量为10条
+            if (messageHistory.length > 10) {
+                messageHistory.shift();
+            }
+            
+            // 保存到本地存储
+            saveHistoryToStorage();
+            
+            // 重置历史索引
+            historyIndex = -1;
+            currentInputBuffer = '';
+        }
 
         // 键盘快捷键支持
         document.addEventListener('keydown', function(e) {
@@ -255,6 +365,9 @@
         async function sendMessage() {
             const message = messageInput.value.trim();
             if (!message || isWaitingResponse) return;
+
+            // 添加消息到历史记录
+            addToHistory(message);
 
             // 添加用户消息到界面
             addMessage(message, 'user');
@@ -286,7 +399,7 @@
                 // 通过 IPC 与主进程通信，调用 chatbot.js
                 const timeout = setTimeout(() => {
                     reject(new Error('请求超时'));
-                }, 30000); // 30秒超时
+                }, 60000); // 30秒超时
 
                 // 监听响应
                 ipcRenderer.once('chatbot-response', (event, response) => {
@@ -386,6 +499,13 @@
 
             chatMessages.appendChild(messageDiv);
             scrollToBottom();
+            
+            // 当添加bot消息后，将焦点定位到输入框
+            if (type === 'bot') {
+                setTimeout(() => {
+                    messageInput.focus();
+                }, 100);
+            }
         }
 
         // 设置等待状态
@@ -540,6 +660,13 @@
             setWaitingState(false);
             // 重新聚焦到输入框
             messageInput.focus();
+            
+            // 清空消息历史记录
+            messageHistory = [];
+            historyIndex = -1;
+            currentInputBuffer = '';
+            saveHistoryToStorage();
+            console.log('已清空消息历史记录');
             
             // 同时清除聊天历史
             ipcRenderer.send('clear-history');

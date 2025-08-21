@@ -28,15 +28,9 @@ const configFilePath = getConfigFilePath();
 function loadSavedConfig() {
     try {
         const configPath = getConfigFilePath();
-        console.log('Attempting to load configuration file:', configPath);
         
         if (fs.existsSync(configPath)) {
             const savedConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            console.log('Loaded saved configuration successfully:', {
-                baseURL: savedConfig.baseURL,
-                modelId: savedConfig.modelId,
-                hasApiKey: !!savedConfig.apiKey
-            });
             return savedConfig;
         } else {
             console.log('Configuration file does not exist:', configPath);
@@ -87,11 +81,6 @@ let currentConfig = {
 const savedConfig = loadSavedConfig();
 if (savedConfig) {
     currentConfig = { ...currentConfig, ...savedConfig };
-    console.log('Using saved configuration:', {
-        baseURL: currentConfig.baseURL,
-        modelId: currentConfig.modelId,
-        hasApiKey: !!currentConfig.apiKey
-    });
 } else {
     console.warn('No saved configuration found, please configure API settings in the interface');
 }
@@ -241,8 +230,8 @@ async function testModelConnection(config) {
         };
         
     } catch (error) {
-        console.error('模型连接测试失败:', error);
-        console.error('错误详情:', {
+        console.error('Model connection test failed:', error);
+        console.error('error detail:', {
             message: error.message,
             status: error.status,
             code: error.code,
@@ -276,11 +265,6 @@ async function testModelConnection(config) {
 async function getAvailableModels(config = null) {
     try {
         const testConfig = config || currentConfig;
-        console.log('获取模型列表，使用配置:', {
-            baseURL: testConfig.baseUrl || testConfig.baseURL,
-            hasApiKey: !!testConfig.apiKey
-        });
-
         // 创建临时客户端
         const tempClient = new OpenAI({
             apiKey: testConfig.apiKey,
@@ -289,16 +273,14 @@ async function getAvailableModels(config = null) {
 
         // 调用 models 端点
         const response = await tempClient.models.list();
-        
-        console.log('模型列表获取成功，模型数量:', response.data?.length || 0);
-        
+                
         return {
             success: true,
             models: response.data || [],
             baseURL: testConfig.baseUrl || testConfig.baseURL
         };
     } catch (error) {
-        console.error('获取模型列表失败:', error);
+        console.error('Failed to retrieve model list:', error);
         
         let errorMessage = '获取模型列表失败';
         if (error.message.includes('401') || error.status === 401) {

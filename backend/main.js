@@ -15,9 +15,8 @@ if (process.platform === 'win32') {
         if (process.stderr.setEncoding) {
             process.stderr.setEncoding('utf8');
         }
-        console.log('已设置控制台编码为UTF-8');
     } catch (error) {
-        console.warn('设置编码失败:', error.message);
+        console.warn('Failed:', error.message);
     }
 }
 
@@ -27,6 +26,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let mainWindow;
 
 function createWindow() {
+    initializeClient();
+
   // 创建浏览器窗口
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -75,7 +76,6 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   // 在 macOS 上，当单击 dock 图标并且没有其他窗口打开时，
   // 通常在应用程序中重新创建一个窗口。
-  initializeClient();
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
@@ -90,7 +90,7 @@ ipcMain.on('chatbot-message', async (event, message) => {
     // 发送响应回渲染进程
     event.reply('chatbot-response', { message: response });
   } catch (error) {
-    console.error('聊天机器人错误:', error);
+    console.error('Chatbot error:', error);
     event.reply('chatbot-response', { error: error.message });
   }
 });
@@ -101,7 +101,7 @@ ipcMain.on('clear-history', (event) => {
     clearHistory();
     event.reply('clear-history-response', { success: true });
   } catch (error) {
-    console.error('清除历史错误:', error);
+    console.error('Clear history error:', error);
     event.reply('clear-history-response', { error: error.message });
   }
 });
@@ -112,7 +112,7 @@ ipcMain.on('update-llm-config', (event, config) => {
     const result = updateConfig(config);
     event.reply('update-config-response', result);
   } catch (error) {
-    console.error('更新配置错误:', error);
+    console.error('Update configuration error:', error);
     event.reply('update-config-response', { success: false, error: error.message });
   }
 });
@@ -123,7 +123,7 @@ ipcMain.on('test-model-connection', async (event, config) => {
     const result = await testModelConnection(config);
     event.reply('test-connection-response', result);
   } catch (error) {
-    console.error('测试连接错误:', error);
+    console.error('Test connection error:', error);
     event.reply('test-connection-response', { success: false, error: error.message });
   }
 });
@@ -134,7 +134,7 @@ ipcMain.on('get-current-config', (event) => {
     const config = getCurrentConfig();
     event.reply('current-config-response', { success: true, config: config });
   } catch (error) {
-    console.error('获取配置错误:', error);
+    console.error('Get configuration error:', error);
     event.reply('current-config-response', { success: false, error: error.message });
   }
 });
@@ -145,7 +145,7 @@ ipcMain.on('get-available-models', async (event, config) => {
     const result = await getAvailableModels(config);
     event.reply('available-models-response', result);
   } catch (error) {
-    console.error('获取模型列表错误:', error);
+    console.error('Get available models error:', error);
     event.reply('available-models-response', { success: false, error: error.message });
   }
 });
@@ -158,7 +158,7 @@ ipcMain.on('get-config-file-path', (event) => {
     const configPath = getConfigFilePath();
     event.reply('config-file-path-response', { success: true, path: configPath });
   } catch (error) {
-    console.error('获取配置文件路径错误:', error);
+    console.error('Get config file path error:', error);
     event.reply('config-file-path-response', { success: false, error: error.message });
   }
 });
@@ -183,7 +183,7 @@ async function callChatbot(message) {
     
     return htmlResponse;
   } catch (error) {
-    console.error('聊天机器人处理错误:', error);
+    console.error('Chatbot processing error:', error);
     throw new Error(`聊天机器人处理失败: ${error.message}`);
   }
 }
@@ -199,11 +199,11 @@ function switch_theme(){
       console.log('主题切换成功');
       return { success: true };
     } catch (error) {
-      console.error('切换主题错误:', error);
+      console.error('Theme switch error:', error);
       return { success: false, error: error.message };
     }
   } else {
-    console.error('主窗口不可用');
+    console.error('Main window unavailable');
     return { success: false, error: '主窗口不可用' };
   }
 }
