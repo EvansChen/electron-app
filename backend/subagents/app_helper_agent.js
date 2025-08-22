@@ -2,7 +2,7 @@ import { Agent, tool } from '@openai/agents';
 import { RECOMMENDED_PROMPT_PREFIX } from '@openai/agents-core/extensions'; 
 import { z } from 'zod';
 import { switch_theme } from '../main.js';
-import { getAvailableModels, updateConfig, getCurrentConfig } from '../config.js';
+import { getAvailableModels, updateConfig, getCurrentConfig, tracingProcessor } from '../config.js';
 
 const app_helper_agent_description = `
 本应用的使用助手，帮助用户更好地使用本应用。职责包括：1、外观主题切换,2、模型列表查询、模型详情查询(by modelId)、切换模型(modelId)。
@@ -20,6 +20,7 @@ const app_helper_agent_instructions = `${RECOMMENDED_PROMPT_PREFIX}
    - 使用tool(model_detail)来获取model的详情
    - 使用tool(switch_to_model)来切换modelId，切换前展示model detail，请求用户确认后再执行切换
    - 使用tool(get_current_config)来获取当前的(模型)配置详情，进一步询问用户是否查询当前modelid的详情
+   - 使用tool(get_last_run_tracing)来获取上次运行的trace信息，展示给的时一个开发者，所以他希望看到详细的内部流程，画一个流程图会很有帮助
    - 如果用户还没有获取列表，直接帮用户调用tool(list_models)来获取列表并展示给用户。
    - 如果列表已经展示了，用户输入一个模型ID时，直接展示该模型的详情，并询问用户是否切换过去。
 `;
@@ -121,7 +122,7 @@ const switch_to_model_tool = tool({
 });
 
 
-const get_current_config = tool({
+const get_current_config_tool = tool({
   name: 'get_current_config',
   description: '获取当前我们自己的配置详情,包括模型ID和baseurl等',
   parameters: z.object({}),
@@ -132,6 +133,16 @@ const get_current_config = tool({
   },
 });
 
+const get_last_run_tracing_tool = tool({
+  name: 'get_last_run_tracing',
+  description: '获取上一次运行的追踪信息,json 格式 返回 tracing 详情',
+  parameters: z.object({}),
+  async execute({ }) {
+    let tracingInfo = await tracingProcessor.getLastRunTracing();
+    return JSON.stringify(tracingInfo, null, 2);
+  },
+});
+
 // --------
 function initializeAppHelperAgent(modelId) {
     app_helper_agent = new Agent({
@@ -139,7 +150,7 @@ function initializeAppHelperAgent(modelId) {
         name: 'app_helper_agent',
         description: app_helper_agent_description,
         instructions: app_helper_agent_instructions,
-        tools:[list_models_tool, switch_theme_tool, model_detail_tool, switch_to_model_tool,get_current_config]
+        tools:[list_models_tool, switch_theme_tool, model_detail_tool, switch_to_model_tool,get_current_config_tool,get_last_run_tracing_tool]
     });
     
     return app_helper_agent;
