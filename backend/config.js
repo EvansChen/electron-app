@@ -1,13 +1,97 @@
 import 'dotenv/config';
-import { setDefaultOpenAIClient, setOpenAIAPI, setTracingDisabled } from '@openai/agents';
+import { setDefaultOpenAIClient, setOpenAIAPI, setTracingDisabled, setTraceProcessors } from '@openai/agents';
 import OpenAI from "openai";
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { app } from 'electron';
 import { initializeChatbot } from './chatbot.js';
+import { config_updated } from './main.js' 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// TracingProcessor 实现，将跟踪信息写入到 tracing.log 文件
+class FileTracingProcessor {
+    constructor(logPath = 'tracing.log') {
+        this.logPath = path.resolve(logPath);
+        this.ensureLogFile();
+        this.isActive = false;
+    }
+
+    ensureLogFile() {
+        try {
+            // 确保日志文件所在目录存在
+            const logDir = path.dirname(this.logPath);
+            if (!fs.existsSync(logDir)) {
+                fs.mkdirSync(logDir, { recursive: true });
+            }
+            
+            // 如果日志文件不存在，创建一个空文件
+            if (!fs.existsSync(this.logPath)) {
+                fs.writeFileSync(this.logPath, '', 'utf8');
+                console.log(`Created tracing log file: ${this.logPath}`);
+            }
+        } catch (error) {
+            console.error('Failed to ensure tracing log file:', error);
+        }
+    }
+
+    formatLogEntry(type, data) {
+        const timestamp = new Date().toISOString();
+        return JSON.stringify({
+            timestamp,
+            type,
+            ...data
+        }) + '\n';
+    }
+
+    writeToLog(entry) {
+        try {
+            fs.appendFileSync(this.logPath, JSON.stringify(entry) + '\n', 'utf8');
+        } catch (error) {
+            console.error('Failed to write trace to file:', error);
+        }
+    }
+
+    // 可选的启动方法
+    start() {
+        this.isActive = true;
+    }
+
+    // 当 trace 开始时调用
+    async onTraceStart(trace) {
+        if (!this.isActive) return;
+        this.writeToLog(trace);
+    }
+
+    // 当 trace 结束时调用
+    async onTraceEnd(trace) {
+        if (!this.isActive) return;
+        this.writeToLog(trace);
+    }
+
+    // 当 span 开始时调用
+    async onSpanStart(span) {
+        if (!this.isActive) return;
+        this.writeToLog(span);
+    }
+
+    async onSpanEnd(span) {
+        if (!this.isActive) return;
+        this.writeToLog(span);
+    }
+
+    async forceFlush() {}
+
+    async shutdown(timeout) {
+        this.isActive = false;
+    }
+}
+
+// 创建 TracingProcessor 实例
+const tracingProcessor = new FileTracingProcessor();
+
+
 
 // 获取用户数据目录，确保配置文件可写
 function getConfigFilePath() {
@@ -121,8 +205,11 @@ function initializeClient() {
 
         setOpenAIAPI("chat_completions");
         setDefaultOpenAIClient(client); 
-        setTracingDisabled(true);
-
+        
+        // 启用跟踪并设置我们的 TracingProcessor
+        setTracingDisabled(false);
+        setTraceProcessors([tracingProcessor]);
+        
         initializeChatbot(currentConfig)
 
         return true;
@@ -166,6 +253,8 @@ function updateConfig(newConfig) {
         if (!initialized) {
             return { success: false, error: 'Configuration is incomplete, unable to initialize client' };
         }
+
+        config_updated();
 
         return { success: true, message: 'Configuration updated successfully and saved' };
     } catch (error) {
@@ -306,4 +395,4 @@ async function getAvailableModels(config = null) {
 }
 
 // Export the agent and functions for use in other modules
-export { updateConfig, testModelConnection, getCurrentConfig, getAvailableModels, getConfigFilePath, initializeClient };
+export { updateConfig, testModelConnection, getCurrentConfig, getAvailableModels, getConfigFilePath, initializeClient, tracingProcessor };

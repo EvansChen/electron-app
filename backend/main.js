@@ -208,5 +208,21 @@ function switch_theme(){
   }
 }
 
+function config_updated() {
+  // 直接调用主窗口的配置更新功能
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    try {
+      mainWindow.webContents.executeJavaScript('updateConfig()');
+      return { success: true };
+    } catch (error) {
+      console.error('Config update error:', error);
+      return { success: false, error: error.message };
+    }
+  } else {
+    console.error('Main window unavailable');
+    return { success: false, error: '主窗口不可用' };
+  }
+}
+
 // 导出函数以便其他模块使用
-export { switch_theme };
+export { switch_theme, config_updated };

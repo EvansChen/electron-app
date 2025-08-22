@@ -544,6 +544,13 @@
             }
         }
 
+        // 更新配置 - 重新获取当前配置并刷新显示
+        function updateConfig() {
+            console.log('配置已更新，重新获取模型信息...');
+            // 重新获取当前配置
+            ipcRenderer.send('get-current-config');
+        }
+
         // 显示错误消息
         function showError(message) {
             const errorDiv = document.createElement('div');
