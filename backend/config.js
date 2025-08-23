@@ -13,7 +13,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // TracingProcessor 实现，将跟踪信息写入到 tracing.log 文件
 class FileTracingProcessor {
     constructor(logPath = 'tracing.log') {
-        this.logPath = path.resolve(logPath);
+        // 将日志文件放到程序运行的当前目录下
+        this.logPath = path.resolve(process.cwd(), logPath);
         this.ensureLogFile();
         this.isActive = false;
     }
@@ -205,7 +206,6 @@ function validateConfig(config = currentConfig) {
 
 // 创建OpenAI客户端（仅在配置有效时）
 let client = null;
-let agent = null;
 
 function initializeClient() {
     const validation = validateConfig();

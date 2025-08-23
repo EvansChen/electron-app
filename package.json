@@ -39,7 +39,7 @@
     "rimraf": "^6.0.1"
   },
   "dependencies": {
-    "@openai/agents": "^0.0.16",
+    "@openai/agents": "^0.0.17",
     "@openai/agents-core": "^0.0.17",
     "dompurify": "^3.2.6",
     "dotenv": "^17.2.1",
