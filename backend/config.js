@@ -48,7 +48,7 @@ class FileTracingProcessor {
     writeToLog(entry) {
         try {
             fs.appendFileSync(this.logPath, JSON.stringify(entry) + '\n', 'utf8');
-            this.lastRun.trace.push(entry);
+            this.thisRun.trace.push(entry);
         } catch (error) {
             console.error('Failed to write trace to file:', error);
         }
@@ -57,7 +57,7 @@ class FileTracingProcessor {
     // 可选的启动方法
     start() {
         this.isActive = true;
-        this.lastRun = {trace:[]};
+        this.thisRun = {trace:[]};
     }
 
     // 当 trace 开始时调用
@@ -87,14 +87,16 @@ class FileTracingProcessor {
 
     async shutdown(timeout) {
         this.isActive = false;
+        this.lastRun = this.thisRun;
     }
 
     // Method to get the last run tracing data
     async getLastRunTracing() {
-        return this.lastRun || null;
+        return this.lastRun || this.thisRun || { trace: [] };
     }
 
     lastRun = null;
+    thisRun = null;
 
 }
 

@@ -1,42 +1,27 @@
 import { Agent, tool } from '@openai/agents';
+
 import { RECOMMENDED_PROMPT_PREFIX } from '@openai/agents-core/extensions'; 
 import { z } from 'zod';
-import { switch_theme } from '../main.js';
-import { getAvailableModels, updateConfig, getCurrentConfig, tracingProcessor } from '../config.js';
+import { getAvailableModels, updateConfig, getCurrentConfig } from '../config.js';
 
 const app_helper_agent_description = `
-本应用的使用助手，帮助用户更好地使用本应用。职责包括：1、外观主题切换,2、模型列表查询、模型详情查询(by modelId)、切换模型(modelId)。
+模型助手：1、模型列表查询、2、模型详情查询(by modelId)、3、切换模型(modelId)。
 `;
 
 // 应用助手代理指令
 const app_helper_agent_instructions = `${RECOMMENDED_PROMPT_PREFIX}
-你是本应用的使用助手，请帮助用户更好地使用本应用。你的主要职责包括：
-1. **外观设置**：
-   - 指导用户如何切换应用主题（暗黑模式/浅色模式）
-   - 按照用户的要求，可以使用 tool(switch_theme) 来切换主题，主题切换前不要的询问，直接切换即可。
+你是模型助手，主要职责：
+   1. 使用tool(list_models)来获取models列表,按照Provider分类，紧凑点展示给用户。
+   2. 使用tool(model_detail)来获取model的详情，如果用户还没有获取列表，引导用户先获取列表。如果列表已经展示了，用户输入一个模型ID时，直接展示该模型的详情，并询问用户是否切换过去。
+   3. 使用tool(switch_to_model)来切换modelId，切换前展示model detail，请求用户确认后再执行切换
+   4. 使用tool(get_current_config)来获取当前的(模型)配置详情，优先使用该tool来回答用户的相关问题。
+   5. 使用tool(transform_to_default_agent)来切换回主代理，如果用户的问题和模型（model）无关，则切回去。
 
-2. **模型(modelId)查询、切换**：
-   - 使用tool(list_models)来获取models列表,按照Provider分类，以表格展示给用户
-   - 使用tool(model_detail)来获取model的详情
-   - 使用tool(switch_to_model)来切换modelId，切换前展示model detail，请求用户确认后再执行切换
-   - 使用tool(get_current_config)来获取当前的(模型)配置详情，进一步询问用户是否查询当前modelid的详情
-   - 使用tool(get_last_run_tracing)来获取上次运行的trace信息，展示给的时一个开发者，所以他希望看到详细的内部流程，画一个流程图会很有帮助
-   - 如果用户还没有获取列表，直接帮用户调用tool(list_models)来获取列表并展示给用户。
-   - 如果列表已经展示了，用户输入一个模型ID时，直接展示该模型的详情，并询问用户是否切换过去。
 `;
-
 
 // 创建OpenAI客户端（仅在配置有效时）
 let app_helper_agent = null;
 
-const switch_theme_tool = tool({
-  name: 'switch_theme',
-  description: '切换APP主题，暗黑→浅色 或者 浅色→暗黑',
-  parameters: z.object({ }),
-  async execute({ }) {
-    return switch_theme();
-  },
-});
 
 // 简化模型列表结果，只保留 name 和 id 字段，并过滤掉不支持 tools 和 response_format 的模型
 function simplify_list_models_result(models_json) {
@@ -58,8 +43,11 @@ function simplify_list_models_result(models_json) {
             .map(model => ({
                 id: model.id
             }));
-        
-        return JSON.stringify(simplifiedModels, null, 2);
+        let modelid_list = [];
+        models_json.models.forEach(m => {
+            modelid_list.push(m.id);
+        });
+        return JSON.stringify(modelid_list, null, 2);
     } catch (error) {
         return JSON.stringify({ error: 'Failed to simplify models list: ' + error.message });
     }
@@ -133,24 +121,17 @@ const get_current_config_tool = tool({
   },
 });
 
-const get_last_run_tracing_tool = tool({
-  name: 'get_last_run_tracing',
-  description: '获取上一次运行的追踪信息,json 格式 返回 tracing 详情',
-  parameters: z.object({}),
-  async execute({ }) {
-    let tracingInfo = await tracingProcessor.getLastRunTracing();
-    return JSON.stringify(tracingInfo, null, 2);
-  },
-});
+
 
 // --------
 function initializeAppHelperAgent(modelId) {
     app_helper_agent = new Agent({
         model: modelId,
-        name: 'app_helper_agent',
+        name: '模型助手',
         description: app_helper_agent_description,
         instructions: app_helper_agent_instructions,
-        tools:[list_models_tool, switch_theme_tool, model_detail_tool, switch_to_model_tool,get_current_config_tool,get_last_run_tracing_tool]
+        // modelSettings: { toolChoice: 'required' },
+        tools:[list_models_tool, model_detail_tool, switch_to_model_tool,get_current_config_tool],
     });
     
     return app_helper_agent;
