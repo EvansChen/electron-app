@@ -1,6 +1,7 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import './deepseek-compatibility.js'; // DeepSeek API 兼容层
 import { handleChatMessage, clearHistory } from './chatbot.js';
 import { updateConfig, testModelConnection, getCurrentConfig, getAvailableModels, getConfigFilePath,initializeClient } from './config.js';
 import { marked } from 'marked';
@@ -42,6 +43,24 @@ function createWindow() {
 
   // 加载应用的 index.html
   mainWindow.loadFile(path.join(__dirname, '../frontend/index.html'));
+
+  // 拦截所有新窗口和导航请求，在外部浏览器中打开链接
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    // 在系统默认浏览器中打开链接
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
+  // 拦截导航事件，防止在应用内导航到外部链接
+  mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
+    const parsedUrl = new URL(navigationUrl);
+    
+    // 如果不是file协议（本地文件），则在外部浏览器打开
+    if (parsedUrl.protocol !== 'file:') {
+      event.preventDefault();
+      shell.openExternal(navigationUrl);
+    }
+  });
 
   // 窗口最大化
   mainWindow.maximize();
@@ -169,6 +188,26 @@ async function callChatbot(message) {
     // 直接调用 chatbot 模块的 handleChatMessage 函数
     const response = await handleChatMessage(message);
     
+    // 配置 marked 选项和自定义渲染器
+    const renderer = new marked.Renderer();
+    
+    // 重写链接渲染器以添加安全属性
+    renderer.link = function(token) {
+      // 处理新版本marked的token对象结构
+      const href = token?.href || token || '';
+      const title = token?.title || '';
+      const text = token?.text || token?.raw || '';
+      
+      // 安全检查，确保href不为undefined
+      if (!href || href === 'undefined') {
+        console.warn('Link href is undefined:', token);
+        return text; // 如果链接无效，只返回文本
+      }
+      
+      const titleAttr = title ? ` title="${title}"` : '';
+      return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer">${text}</a>`;
+    };
+
     // 配置 marked 选项
     marked.setOptions({
       breaks: true,  // 支持换行
@@ -176,6 +215,7 @@ async function callChatbot(message) {
       sanitize: false,  // 不清理 HTML，允许更好的格式化
       smartLists: true, // 智能列表处理
       smartypants: false, // 关闭智能标点符号，避免冲突
+      renderer: renderer
     });
     
     // 将 markdown 格式的响应转换为 HTML

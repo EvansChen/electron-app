@@ -123,18 +123,12 @@ const configFilePath = getConfigFilePath();
 
 // 加载保存的配置
 function loadSavedConfig() {
-    try {
-        const configPath = getConfigFilePath();
-        
-        if (fs.existsSync(configPath)) {
-            const savedConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            return savedConfig;
-        } else {
-            console.log('Configuration file does not exist:', configPath);
-        }
-    } catch (error) {
-        console.error('Failed to load configuration file:', error);
-        console.error('Configuration file path:', getConfigFilePath());
+   
+    const configPath = getConfigFilePath();
+    
+    if (fs.existsSync(configPath)) {
+        const savedConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        return savedConfig;
     }
     return null;
 }
@@ -156,13 +150,6 @@ function saveConfigToFile(config) {
         console.log('Configuration saved to file:', configPath);
         return true;
     } catch (error) {
-        console.error('Failed to save configuration file:', error);
-        console.error('Configuration file path:', getConfigFilePath());
-        console.error('Error details:', {
-            code: error.code,
-            message: error.message,
-            path: error.path
-        });
         return false;
     }
 }
@@ -171,7 +158,8 @@ function saveConfigToFile(config) {
 let currentConfig = {
     apiKey: "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", // 需要用户配置
     baseURL: "https://openrouter.ai/api/v1",
-    modelId: "qwen/qwen-2.5-3b-instruct" // 使用一个更常见的免费模型
+    modelId: "qwen/qwen-2.5-3b-instruct", // 使用一个更常见的免费模型
+    search_tool:{TAVILY_API_KEY:""}
 };
 
 // 在启动时加载保存的配置
@@ -246,15 +234,11 @@ function updateConfig(newConfig) {
         if (newConfig.modelId) {
             currentConfig.modelId = newConfig.modelId;
         }
+        if (newConfig.search_tool && newConfig.search_tool.TAVILY_API_KEY) {
+            currentConfig.search_tool = { TAVILY_API_KEY: newConfig.search_tool.TAVILY_API_KEY };
+        }
         
-        // 保存配置到文件
-        const configToSave = {
-            apiKey: currentConfig.apiKey,
-            baseURL: currentConfig.baseURL,
-            modelId: currentConfig.modelId
-        };
-        
-        const saved = saveConfigToFile(configToSave);
+        const saved = saveConfigToFile(currentConfig);
         if (!saved) {
             console.warn('Configuration save failed, but it will still apply to the current session');
         }
@@ -276,11 +260,7 @@ function updateConfig(newConfig) {
 
 // 获取当前配置的函数
 function getCurrentConfig() {
-    return {
-        apiKey: currentConfig.apiKey,
-        baseURL: currentConfig.baseURL,
-        modelId: currentConfig.modelId
-    };
+    return currentConfig
 }
 
 // 测试模型连通性的函数

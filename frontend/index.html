@@ -220,6 +220,18 @@
             
             // 获取当前配置并更新状态
             requestCurrentConfig();
+            
+            // 添加链接点击事件监听器，确保所有链接在外部浏览器打开
+            document.addEventListener('click', function(event) {
+                const target = event.target;
+                // 检查点击的是否是链接
+                if (target.tagName === 'A' && target.href) {
+                    event.preventDefault();
+                    // 使用Electron的require来调用shell
+                    const { shell } = require('electron');
+                    shell.openExternal(target.href);
+                }
+            });
         });
 
         // 主题切换功能

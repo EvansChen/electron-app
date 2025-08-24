@@ -41,6 +41,7 @@
   "dependencies": {
     "@openai/agents": "^0.0.17",
     "@openai/agents-core": "^0.0.17",
+    "@tavily/core": "^0.5.11",
     "dompurify": "^3.2.6",
     "dotenv": "^17.2.1",
     "marked": "^16.1.2",

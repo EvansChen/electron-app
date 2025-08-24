@@ -5,6 +5,7 @@ import { removeAllTools } from '@openai/agents-core/extensions';
 import { initializeAppHelperAgent } from './subagents/app_helper_agent.js';  
 import { tracingProcessor } from './config.js';
 import { switch_theme } from './main.js';
+import { search_tool,set_search_tool_key_TAVILY_API_KEY } from './subagents/public_tools.js';
 
 // ---
 let chatbot_instructions = `
@@ -12,9 +13,11 @@ let chatbot_instructions = `
 您是多Agents协同的系统的入口agent，你优先自己解决问题，完成任务，如果有需要的话果断的把任务交给子agent。
 
 ## 工具使用
+- [搜索工具]：使用tool(search_tool)来获取互联网上最新的资讯，你帮忙把对应url也返回给用户，方便用户点击跳转到浏览器查看
 - [调试辅助]：使用tool(get_last_run_tracing for debugging)来获取上次运行的trace信息，整理一下逻辑流程，展示给开发者
 - [调试辅助]：使用tool(get_messages_history_tool for debugging)来获取messages历史记录，整理一下流程，展示给用户，同时把内容格式化之后原样返回，如果遇到太长的文本，用省略号缩短。
 - [应用设置]：使用tool(switch_theme_tool)来切换主题,直接切换，不要询问
+- [应用设置]：使用tool(set_search_tool_key_TAVILY_API_KEY)来设置搜索工具 Tavily API Key
 - [模型助手]：使用tool(switch_to_app_helper_agent)来切换到模型配置助手,完成“模型列表查询”、“模型详情查询(by modelId)”、“模型切换(modelId)”、“当前模型配置查询”等任务
 
 ## 基本原则
@@ -71,7 +74,12 @@ function initializeChatbot(config) {
         description: 'A helpful AI assistant chatbot',
         instructions: chatbot_instructions,
 
-        tools: [get_last_run_tracing_tool, get_messages_history_tool, switch_theme_tool],
+        tools: [get_last_run_tracing_tool, 
+          get_messages_history_tool, 
+          switch_theme_tool,
+          search_tool,
+          set_search_tool_key_TAVILY_API_KEY
+        ],
 
         handoffs: handoffs
     });
@@ -120,6 +128,7 @@ async function handleChatMessage(message) {
 
         return output_string || result.output || '抱歉，模型现在无法回应，result.output == null。';
     } catch (error) {
+        console.error('Chatbot processing error:', error);
         let userFriendlyError = `聊天机器人处理失败: ${error.message}`;
         throw new Error(userFriendlyError);
     }
