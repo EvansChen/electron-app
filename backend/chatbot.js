@@ -1,11 +1,60 @@
-import { Agent, run, handoff,tool  } from '@openai/agents';
+import { Agent, run, user, handoff,tool  } from '@openai/agents';
 import { z } from 'zod';
 import { removeAllTools } from '@openai/agents-core/extensions';
 
 import { initializeAppHelperAgent } from './subagents/app_helper_agent.js';  
 import { tracingProcessor } from './config.js';
 import { switch_theme } from './main.js';
-import { search_tool,set_search_tool_key_TAVILY_API_KEY } from './subagents/public_tools.js';
+import { search_tool,extract_webcontent_tool,set_search_tool_key_TAVILY_API_KEY } from './subagents/public_tools.js';
+import { logger } from './utils/logger.js';
+
+// 添加 agent hooks 用于调试和监控
+function attachHooks(agent) {
+  let eventCounter = 0;
+  let tokenCounter = 0;
+  function toPrintableUsage(usage) {
+    if (!usage) return 'No usage info';
+    tokenCounter += usage.totalTokens ?? 0;
+    return `tokens ${usage.totalTokens ?? 0}/${tokenCounter}`;
+  }
+
+  agent.on('agent_start', (ctx, agent) => {
+    eventCounter++;
+    logger.info(
+      `${eventCounter}: ${agent.name} started. \n(${toPrintableUsage(ctx?.usage)})`
+    );
+  });
+  agent.on('agent_end', (ctx, output) => {
+    eventCounter++;
+    logger.info(
+      `${eventCounter}: ${agent.name} ended with output \n (${toPrintableUsage(ctx?.usage)})`
+    );
+    logger.debug(
+      `\n ${JSON.stringify(output)}.`
+    );
+  });
+  agent.on('agent_tool_start', (ctx, tool) => {
+    eventCounter++;
+    logger.info(
+      `${eventCounter}: Tool ${tool.name} started. \n(${toPrintableUsage(ctx?.usage)})`
+    );
+  });
+  agent.on('agent_tool_end', (ctx, tool, result) => {
+    eventCounter++;
+    logger.info(
+      `${eventCounter}: Tool ${tool.name} ended with result \n(${toPrintableUsage(ctx?.usage)}).`
+    );
+    logger.debug(
+      `\n ${JSON.stringify(result)}.`
+    );
+  });
+  agent.on('agent_handoff', (ctx, nextAgent) => {
+    eventCounter++;
+    logger.info(
+      `${eventCounter}: Handoff from ${agent.name} to ${nextAgent.name}. \n (${toPrintableUsage(ctx?.usage)})`
+    );
+  });
+}
 
 // ---
 let chatbot_instructions = `
@@ -14,11 +63,12 @@ let chatbot_instructions = `
 
 ## 工具使用
 - [搜索工具]：使用tool(search_tool)来获取互联网上最新的资讯，你帮忙把对应url也返回给用户，方便用户点击跳转到浏览器查看
+- [内容抓取]：使用tool(extract_webcontent_tool)来获取网页内容，当用户输入的内容中出现url时，使用该工具抓取页面内容并结合用户的意图来给用户回答
 - [调试辅助]：使用tool(get_last_run_tracing for debugging)来获取上次运行的trace信息，整理一下逻辑流程，展示给开发者
 - [调试辅助]：使用tool(get_messages_history_tool for debugging)来获取messages历史记录，整理一下流程，展示给用户，同时把内容格式化之后原样返回，如果遇到太长的文本，用省略号缩短。
 - [应用设置]：使用tool(switch_theme_tool)来切换主题,直接切换，不要询问
 - [应用设置]：使用tool(set_search_tool_key_TAVILY_API_KEY)来设置搜索工具 Tavily API Key
-- [模型助手]：使用tool(switch_to_app_helper_agent)来切换到模型配置助手,完成“模型列表查询”、“模型详情查询(by modelId)”、“模型切换(modelId)”、“当前模型配置查询”等任务
+- [模型助手]：使用tool(switch_to_模型助手)来切换到模型配置助手,完成“模型列表查询”、“模型详情查询(by modelId)”、“模型切换(modelId)”、“当前模型配置查询”等任务
 
 ## 基本原则
 - 使用中文进行交流,语言简练而优雅，结束时预测用户下一步的意图，并询问他的选择。在“回答用户的内容”和“询问用户下一步意图”之间区分一下。
@@ -61,6 +111,7 @@ const switch_theme_tool = tool({
 });
 
 
+
 function initializeChatbot(config) {
     // add sub agents
     app_helper_agent = initializeAppHelperAgent(config.modelId);
@@ -78,6 +129,7 @@ function initializeChatbot(config) {
           get_messages_history_tool, 
           switch_theme_tool,
           search_tool,
+          extract_webcontent_tool,
           set_search_tool_key_TAVILY_API_KEY
         ],
 
@@ -90,6 +142,10 @@ function initializeChatbot(config) {
         toolNameOverride: 'transform_to_default_agent'
     }));
 
+    // 为 agents 添加 hooks 用于调试和监控
+    attachHooks(main_agent);
+    attachHooks(app_helper_agent);
+
     return true;
 }
 
@@ -98,7 +154,8 @@ function initializeChatbot(config) {
 let last_result = null;
 async function handleChatMessage(message) {
     try {
-        history = history.concat({ role: 'user', content: message });
+        history.push(user(message));
+
         let agent_to_run = main_agent;
 
         if (last_result && last_result.lastAgent) {
@@ -128,7 +185,6 @@ async function handleChatMessage(message) {
 
         return output_string || result.output || '抱歉，模型现在无法回应，result.output == null。';
     } catch (error) {
-        console.error('Chatbot processing error:', error);
         let userFriendlyError = `聊天机器人处理失败: ${error.message}`;
         throw new Error(userFriendlyError);
     }

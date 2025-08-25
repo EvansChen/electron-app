@@ -1,0 +1,283 @@
+/* Debug Panel Styles */
+.debug-panel {
+    position: fixed;
+    top: 0;
+    right: -350px; /* 默认隐藏在右侧 */
+    width: 350px;
+    height: 100vh;
+    background: var(--container-bg);
+    border-left: 2px solid var(--border-color);
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+.debug-panel.open {
+    right: 0; /* 显示面板 */
+}
+
+.debug-panel-header {
+    background: linear-gradient(135deg, var(--header-bg-start) 0%, var(--header-bg-end) 100%);
+    color: var(--header-text);
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.debug-panel-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.debug-panel-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: var(--header-text);
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s ease;
+}
+
+.debug-panel-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Debug Panel Vue组件样式 */
+.debug-panel-vue {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.debug-panel-vue .debug-panel-controls {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--container-bg);
+}
+
+.debug-panel-vue .debug-panel-content {
+    flex: 1;
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    padding: 10px;
+    background: var(--messages-bg);
+    min-height: 200px;
+    max-height: calc(100vh - 200px);
+    position: relative;
+}
+
+.debug-status {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.debug-controls-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.debug-control-btn {
+    background: var(--header-bg-start);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s ease;
+    flex: 1;
+}
+
+.debug-control-btn:hover {
+    opacity: 0.9;
+}
+
+.debug-control-btn.active {
+    background: #28a745;
+}
+
+.debug-control-btn.clear {
+    background: #dc3545;
+}
+
+.debug-filter-select {
+    background: var(--container-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    flex: 1;
+}
+
+.debug-log-entry {
+    margin-bottom: 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border-left: 4px solid;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 11px;
+    line-height: 1.4;
+    word-break: break-all;
+    animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.debug-log-entry.info {
+    background: #e8f4f8;
+    border-left-color: #17a2b8;
+    color: #0c5460;
+}
+
+.debug-log-entry.error {
+    background: #f8e8e8;
+    border-left-color: #dc3545;
+    color: #721c24;
+}
+
+.debug-log-entry.warn {
+    background: #fff3cd;
+    border-left-color: #ffc107;
+    color: #856404;
+}
+
+.debug-log-entry.debug {
+    background: #f8f9fa;
+    border-left-color: #6c757d;
+    color: #495057;
+}
+
+[data-theme="dark"] .debug-log-entry.info {
+    background: #1a2332;
+    color: #7dd3fc;
+}
+
+[data-theme="dark"] .debug-log-entry.error {
+    background: #2d1b1b;
+    color: #fca5a5;
+}
+
+[data-theme="dark"] .debug-log-entry.warn {
+    background: #2d2a1b;
+    color: #fde68a;
+}
+
+[data-theme="dark"] .debug-log-entry.debug {
+    background: #1f1f1f;
+    color: #d1d5db;
+}
+
+.debug-log-timestamp {
+    color: var(--text-secondary);
+    font-size: 10px;
+    margin-bottom: 2px;
+}
+
+.debug-log-message {
+    margin-bottom: 2px;
+    font-weight: 500;
+}
+
+.debug-log-meta {
+    color: var(--text-secondary);
+    font-size: 10px;
+    white-space: pre-wrap;
+}
+
+.debug-toggle-button {
+    position: fixed;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    background: var(--header-bg-start);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px 0 0 6px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: -3px 0 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    z-index: 999;
+}
+
+.debug-toggle-button:hover {
+    background: var(--header-bg-end);
+    right: 12px;
+}
+
+.debug-toggle-button.panel-open {
+    right: 350px;
+    border-radius: 0 6px 6px 0;
+}
+
+/* 调整主聊天容器，为调试面板留出空间 */
+.chat-container.debug-panel-open {
+    margin-right: 370px;
+}
+
+/* 调试面板状态指示器 */
+.debug-status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-left: 8px;
+    animation: pulse 2s infinite;
+}
+
+.debug-status-indicator.active {
+    background: #28a745;
+}
+
+.debug-status-indicator.inactive {
+    background: #6c757d;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* 自定义滚动条 */
+.debug-panel-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.debug-panel-content::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+}
+
+.debug-panel-content::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
+}
+
+.debug-panel-content::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+}

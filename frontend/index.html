@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="mcp_panel.css">
     <!-- LLM Panel CSS -->
     <link rel="stylesheet" href="llm_panel.css">
+    <!-- Debug Panel CSS -->
+    <link rel="stylesheet" href="debug_panel.css">
 
 </head>
 <body>
@@ -92,10 +94,30 @@
         </div>
     </div>
 
+    <!-- Debug Panel -->
+    <div class="debug-panel" id="debugPanel">
+        <div class="debug-panel-header">
+            <div class="debug-panel-title">
+                调试面板
+            </div>
+            <button class="debug-panel-close" onclick="closeDebugPanel()">×</button>
+        </div>
+        <div id="debugPanelContent">
+            <!-- Vue 调试组件将在这里渲染 -->
+        </div>
+    </div>
+
+    <!-- Debug Toggle Button -->
+    <button class="debug-toggle-button" id="debugToggleButton" onclick="toggleDebugPanel()">
+        |
+    </button>
+
     <!-- MCP Panel JS -->
     <script src="mcp_panel.js"></script>
     <!-- LLM Panel JS -->
     <script src="llm_panel.js"></script>
+    <!-- Debug Panel JS -->
+    <script src="debug_panel.js"></script>
     <script>
         const { ipcRenderer } = require('electron');
         

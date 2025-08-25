@@ -5,6 +5,14 @@ class Logger {
   constructor(logDir = './logs') {
     this.logDir = logDir;
     this.ensureLogDir();
+    this.mainWindow = null; // 用于存储主窗口引用
+    this.logHistory = []; // 存储最近的日志历史
+    this.maxHistorySize = 1000; // 最大历史记录数
+  }
+
+  // 设置主窗口引用，用于发送日志到前端
+  setMainWindow(window) {
+    this.mainWindow = window;
   }
 
   ensureLogDir() {
@@ -23,6 +31,36 @@ class Logger {
     }) + '\n';
   }
 
+  // 发送日志到前端调试面板
+  sendToDebugPanel(level, message, meta = {}) {
+    const logData = {
+      timestamp: new Date().toISOString(),
+      level,
+      message,
+      meta
+    };
+
+    // 添加到历史记录
+    this.logHistory.push(logData);
+    if (this.logHistory.length > this.maxHistorySize) {
+      this.logHistory.splice(0, this.logHistory.length - this.maxHistorySize);
+    }
+
+    // 发送到前端（如果主窗口存在且未被销毁）
+    if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+      try {
+        this.mainWindow.webContents.send('debug-log', logData);
+      } catch (error) {
+        console.error('Failed to send log to debug panel:', error);
+      }
+    }
+  }
+
+  // 获取日志历史记录
+  getLogHistory() {
+    return this.logHistory;
+  }
+
   writeLog(level, message, meta = {}) {
     const logFile = path.join(this.logDir, `${level}.log`);
     const formattedMessage = this.formatMessage(level, message, meta);
@@ -30,10 +68,9 @@ class Logger {
     // 异步写入文件
     fs.appendFile(logFile, formattedMessage, (err) => {
       if (err) console.error('Failed to write log:', err);
-    });
-    
-    // 同时输出到控制台
-    console[level === 'error' ? 'error' : 'log'](message, meta);
+    });    
+    // 发送到调试面板
+    this.sendToDebugPanel(level, message, meta);
   }
 
   info(message, meta = {}) {

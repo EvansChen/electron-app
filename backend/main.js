@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import './deepseek-compatibility.js'; // DeepSeek API 兼容层
 import { handleChatMessage, clearHistory } from './chatbot.js';
 import { updateConfig, testModelConnection, getCurrentConfig, getAvailableModels, getConfigFilePath,initializeClient } from './config.js';
+import { logger } from './utils/logger.js';
 import { marked } from 'marked';
 
 // 设置控制台编码为UTF-8（仅在Windows下）
@@ -43,6 +44,14 @@ function createWindow() {
 
   // 加载应用的 index.html
   mainWindow.loadFile(path.join(__dirname, '../frontend/index.html'));
+
+  // 设置logger的主窗口引用，用于发送日志到前端
+  logger.setMainWindow(mainWindow);
+
+  // 窗口加载完成后发送测试日志
+  mainWindow.webContents.once('did-finish-load', () => {
+    logger.info('ready');
+  });
 
   // 拦截所有新窗口和导航请求，在外部浏览器中打开链接
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -179,6 +188,17 @@ ipcMain.on('get-config-file-path', (event) => {
   } catch (error) {
     console.error('Get config file path error:', error);
     event.reply('config-file-path-response', { success: false, error: error.message });
+  }
+});
+
+// IPC 通信处理 - 请求调试日志历史
+ipcMain.on('request-debug-logs', (event) => {
+  try {
+    const logHistory = logger.getLogHistory();
+    event.reply('debug-logs-history', logHistory);
+  } catch (error) {
+    console.error('Get debug logs error:', error);
+    event.reply('debug-logs-history', []);
   }
 });
 

@@ -35,7 +35,7 @@ const search_tool = tool({
       const apiKey = currentConfig.search_tool.TAVILY_API_KEY;
 
       if (!apiKey || apiKey.trim() === '') {
-        return { success: false, error: 'TAVILY_API_KEY 未设置, 请引导用户设置' };
+        return { success: false, error: 'TAVILY_API_KEY 未设置, 请引导用户设置 tavily.com' };
       }
 
       const tvly = tavily({ apiKey });
@@ -51,4 +51,33 @@ const search_tool = tool({
   },
 });
 
-export { search_tool, set_search_tool_key_TAVILY_API_KEY };
+
+const extract_webcontent_tool = tool({
+  name: 'extract_webcontent_tool',
+  description: '提取网页内容工具，使用 Tavily API 进行网页内容提取',
+  parameters: z.object({
+    url: z.string().min(1).max(100).describe('想要提取内容的网页的URL'),
+  }),
+  async execute({ url }) {
+    try {
+      const currentConfig = getCurrentConfig();
+      const apiKey = currentConfig.search_tool.TAVILY_API_KEY;
+
+      if (!apiKey || apiKey.trim() === '') {
+        return { success: false, error: 'TAVILY_API_KEY 未设置, 请引导用户设置 tavily.com' };
+      }
+
+      const tvly = tavily({ apiKey });
+      const response = await tvly.extract(url);
+      return response;
+
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || '提取失败，可能是 TAVILY_API_KEY 未设置'
+      };
+    }
+  },
+});
+
+export { search_tool, extract_webcontent_tool, set_search_tool_key_TAVILY_API_KEY };
