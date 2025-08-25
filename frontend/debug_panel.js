@@ -29,7 +29,12 @@ const DebugPanel = {
                         class="debug-control-btn" 
                         :class="{ active: autoScroll }"
                         @click="toggleAutoScroll">
-                        {{ autoScroll ? '📜 自动滚动' : '📜 手动滚动' }}
+                        {{ autoScroll ? '📜 自动' : '📜 手动' }}
+                    </button>
+                    <button 
+                        class="debug-control-btn devtools" 
+                        @click="openDevTools">
+                        🔧 DvT
                     </button>
                 </div>
                 <div class="debug-controls-row">
@@ -51,7 +56,8 @@ const DebugPanel = {
                     v-for="log in filteredLogs" 
                     :key="log.id"
                     class="debug-log-entry"
-                    :class="log.level">
+                    :class="log.level"
+                    @contextmenu="showContextMenu($event, log)">
                     <div class="debug-log-timestamp">{{ formatTimestamp(log.timestamp) }}</div>
                     <div class="debug-log-message">{{ log.message }}</div>
                     <div v-if="log.meta && Object.keys(log.meta).length > 0" class="debug-log-meta">
@@ -127,9 +133,154 @@ const DebugPanel = {
             // 这个方法保留以防未来需要滚动事件处理
         },
         
+        openDevTools() {
+            // 调用 Electron 的 ipcRenderer 打开开发者工具
+            if (typeof require !== 'undefined') {
+                const { ipcRenderer } = require('electron');
+                ipcRenderer.send('open-devtools');
+            } else {
+                console.error('Electron ipcRenderer 不可用');
+            }
+        },
+        
         scrollToBottom() {
             if (this.$refs.logContainer) {
                 this.$refs.logContainer.scrollTop = this.$refs.logContainer.scrollHeight;
+            }
+        },
+        
+        showContextMenu(event, log) {
+            event.preventDefault();
+            
+            // 创建右键菜单
+            const contextMenu = document.createElement('div');
+            contextMenu.className = 'debug-context-menu';
+            contextMenu.innerHTML = `
+                <div class="debug-context-menu-item" data-action="copy-message">复制消息</div>
+                <div class="debug-context-menu-item" data-action="copy-full">复制完整日志</div>
+                <div class="debug-context-menu-item" data-action="copy-timestamp">复制时间戳</div>
+            `;
+            
+            // 设置菜单位置
+            contextMenu.style.position = 'fixed';
+            contextMenu.style.left = event.clientX + 'px';
+            contextMenu.style.top = event.clientY + 'px';
+            contextMenu.style.zIndex = '10000';
+            
+            // 添加到页面
+            document.body.appendChild(contextMenu);
+            
+            // 添加点击事件
+            contextMenu.addEventListener('click', (e) => {
+                const action = e.target.dataset.action;
+                if (action) {
+                    this.handleContextMenuAction(action, log);
+                }
+                this.removeContextMenu();
+            });
+            
+            // 点击其他地方关闭菜单
+            const closeMenu = (e) => {
+                if (!contextMenu.contains(e.target)) {
+                    this.removeContextMenu();
+                    document.removeEventListener('click', closeMenu);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', closeMenu), 0);
+        },
+        
+        handleContextMenuAction(action, log) {
+            let textToCopy = '';
+            
+            switch (action) {
+                case 'copy-message':
+                    textToCopy = log.message;
+                    break;
+                case 'copy-full':
+                    textToCopy = `[${this.formatTimestamp(log.timestamp)}] [${log.level.toUpperCase()}] ${log.message}`;
+                    if (log.meta && Object.keys(log.meta).length > 0) {
+                        textToCopy += `\n${this.formatMeta(log.meta)}`;
+                    }
+                    break;
+                case 'copy-timestamp':
+                    textToCopy = this.formatTimestamp(log.timestamp);
+                    break;
+            }
+            
+            this.copyToClipboard(textToCopy);
+        },
+        
+        copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                // 使用现代 clipboard API
+                navigator.clipboard.writeText(text).then(() => {
+                    this.showCopyNotification('已复制到剪贴板');
+                }).catch(err => {
+                    console.error('复制失败:', err);
+                    this.fallbackCopyToClipboard(text);
+                });
+            } else {
+                // 回退方案
+                this.fallbackCopyToClipboard(text);
+            }
+        },
+        
+        fallbackCopyToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                this.showCopyNotification('已复制到剪贴板');
+            } catch (err) {
+                console.error('复制失败:', err);
+                this.showCopyNotification('复制失败');
+            }
+            
+            document.body.removeChild(textArea);
+        },
+        
+        showCopyNotification(message) {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.className = 'debug-copy-notification';
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #4CAF50;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 4px;
+                z-index: 10001;
+                font-size: 12px;
+                transition: opacity 0.3s;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // 3秒后移除
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 2000);
+        },
+        
+        removeContextMenu() {
+            const existingMenu = document.querySelector('.debug-context-menu');
+            if (existingMenu) {
+                document.body.removeChild(existingMenu);
             }
         },
         
@@ -189,6 +340,7 @@ const DebugPanel = {
     
     beforeUnmount() {
         this.disconnectFromLogger();
+        this.removeContextMenu();
     }
 };
 

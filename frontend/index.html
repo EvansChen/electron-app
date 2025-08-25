@@ -430,6 +430,14 @@
         // 调用聊天机器人 API
         async function callChatbot(message) {
             return new Promise((resolve, reject) => {
+                // 记录请求消息到AI消息面板
+                if (typeof addAIMessage === 'function') {
+                    addAIMessage('request', { 
+                        message: message,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+                
                 // 通过 IPC 与主进程通信，调用 chatbot.js
                 const timeout = setTimeout(() => {
                     reject(new Error('请求超时'));
@@ -438,6 +446,15 @@
                 // 监听响应
                 ipcRenderer.once('chatbot-response', (event, response) => {
                     clearTimeout(timeout);
+                    
+                    // 记录响应消息到AI消息面板
+                    if (typeof addAIMessage === 'function') {
+                        addAIMessage('response', {
+                            response: response,
+                            timestamp: new Date().toISOString()
+                        });
+                    }
+                    
                     if (response.error) {
                         reject(new Error(response.error));
                     } else {

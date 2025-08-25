@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import './deepseek-compatibility.js'; // DeepSeek API 兼容层
-import { handleChatMessage, clearHistory } from './chatbot.js';
+import { handleChatMessage, clearHistory, getHistory } from './chatbot.js';
 import { updateConfig, testModelConnection, getCurrentConfig, getAvailableModels, getConfigFilePath,initializeClient } from './config.js';
 import { logger } from './utils/logger.js';
 import { marked } from 'marked';
@@ -50,7 +50,7 @@ function createWindow() {
 
   // 窗口加载完成后发送测试日志
   mainWindow.webContents.once('did-finish-load', () => {
-    logger.info('ready');
+    logger.debug('ready');
   });
 
   // 拦截所有新窗口和导航请求，在外部浏览器中打开链接
@@ -134,6 +134,17 @@ ipcMain.on('clear-history', (event) => {
   }
 });
 
+// IPC 通信处理 - 获取聊天历史
+ipcMain.on('get-chat-history', (event) => {
+  try {
+    const history = getHistory();
+    event.reply('chat-history-response', { history: history });
+  } catch (error) {
+    console.error('Get chat history error:', error);
+    event.reply('chat-history-response', { error: error.message, history: [] });
+  }
+});
+
 // IPC 通信处理 - 更新LLM配置
 ipcMain.on('update-llm-config', (event, config) => {
   try {
@@ -199,6 +210,19 @@ ipcMain.on('request-debug-logs', (event) => {
   } catch (error) {
     console.error('Get debug logs error:', error);
     event.reply('debug-logs-history', []);
+  }
+});
+
+// IPC 通信处理 - 打开开发者工具
+ipcMain.on('open-devtools', (event) => {
+  try {
+    if (mainWindow && mainWindow.webContents) {
+      mainWindow.webContents.openDevTools();
+      logger.debug('开发者工具已打开');
+    }
+  } catch (error) {
+    console.error('打开开发者工具失败:', error);
+    logger.error('打开开发者工具失败: ' + error.message);
   }
 });
 

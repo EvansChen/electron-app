@@ -183,6 +183,8 @@ async function handleChatMessage(message) {
           output_string = prefix + ': ' + result.finalOutput;
         } 
 
+        logger.debug(JSON.stringify(history, null, 2));
+
         return output_string || result.output || '抱歉，模型现在无法回应，result.output == null。';
     } catch (error) {
         let userFriendlyError = `聊天机器人处理失败: ${error.message}`;
@@ -196,6 +198,10 @@ function clearHistory() {
     last_result = null;
 }
 
+function getHistory() {
+    return history;
+}
+
 
 // Export the agent and functions for use in other modules
-export { initializeChatbot, handleChatMessage, clearHistory };
+export { initializeChatbot, handleChatMessage, clearHistory, getHistory };
